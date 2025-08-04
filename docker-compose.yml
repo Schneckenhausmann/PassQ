@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: passq
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: passq
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U passq -d passq"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://passq:securepassword@db:5432/passq
+      JWT_SECRET: your_very_secure_jwt_secret_here
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+  
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:

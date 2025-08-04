@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PassQ</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="popup-header">
+      <div class="logo-container">
+        <svg width="24" height="24" viewBox="0 0 100 100" class="logo">
+          <defs>
+            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" r="45" fill="url(#logoGradient)" stroke="#1e40af" stroke-width="2"/>
+          <rect x="30" y="35" width="40" height="30" rx="5" fill="none" stroke="white" stroke-width="3"/>
+          <circle cx="50" cy="50" r="3" fill="white"/>
+          <path d="M35 35 L35 25 C35 18 41 12 50 12 C59 12 65 18 65 25 L65 35" stroke="white" stroke-width="3" fill="none"/>
+          <text x="50" y="80" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Q</text>
+        </svg>
+        <span class="logo-text">PassQ</span>
+      </div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="loginForm" class="login-form">
+      <h3>Sign in to PassQ</h3>
+      <form id="loginFormElement">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+      <div class="login-footer">
+        <a href="#" id="openPassQ">Open PassQ Web App</a>
+      </div>
+    </div>
+
+    <!-- Main Content (when logged in) -->
+    <div id="mainContent" class="main-content" style="display: none;">
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search passwords..." class="search-input">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+          <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+
+      <div class="current-site" id="currentSite">
+        <div class="site-info">
+          <div class="site-favicon"></div>
+          <div class="site-details">
+            <div class="site-name">Current Site</div>
+            <div class="site-url"></div>
+          </div>
+        </div>
+        <div class="site-actions">
+          <button id="autofillBtn" class="btn-primary btn-small">Autofill</button>
+        </div>
+      </div>
+
+      <div class="credentials-list" id="credentialsList">
+        <!-- Credentials will be populated here -->
+      </div>
+
+      <div class="popup-footer">
+        <button id="openVault" class="btn-secondary">Open Vault</button>
+        <button id="logoutBtn" class="btn-secondary">Logout</button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="loading-state">
+      <div class="spinner"></div>
+      <p>Connecting to PassQ...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="error-state" style="display: none;">
+      <div class="error-icon">⚠️</div>
+      <p id="errorMessage">Connection failed</p>
+      <button id="retryBtn" class="btn-primary">Retry</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

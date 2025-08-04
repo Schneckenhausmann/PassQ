@@ -1,0 +1,18 @@
+/* Minimal CSS Reset for Tailwind */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { height: 100%; width: 100%; }
+body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: #fff; color: #000; }
+
+/* Custom cartoon shadow utility for black/white look */
+.cartoon-shadow { box-shadow: 4px 4px 0 0 #000; }
+.cartoon-border { border: 3px solid #000; }
+.cartoon-btn { @apply cartoon-border cartoon-shadow bg-white text-black font-bold px-4 py-2 rounded transition-all duration-150 active:translate-x-1 active:translate-y-1; }
+.cartoon-btn-primary { @apply cartoon-btn bg-black text-white; }
+
+/* Utility for quirky logo animation */
+.logo-wiggle { animation: wiggle 0.7s infinite alternate cubic-bezier(.36,.07,.19,.97); }
+@keyframes wiggle { 0% { transform: rotate(-3deg) scale(1.03); } 100% { transform: rotate(3deg) scale(0.97); } }
+
+/* Hide scrollbars for a cleaner look */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

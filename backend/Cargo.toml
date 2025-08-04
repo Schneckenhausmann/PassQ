@@ -1,0 +1,22 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+actix-cors = "0.7"
+diesel = { version = "2", features = ["postgres", "r2d2", "uuid", "serde_json", "chrono"] }
+dotenv = "0.15"
+jsonwebtoken = "9" # latest API
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+bcrypt = "0.15"
+r2d2 = "0.8"
+uuid = { version = "1.4", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+ring = "0.17"
+totp-rs = { version = "5.7", features = ["gen_secret", "otpauth"] }
+regex = "1"
+log = "0.4"
+env_logger = "0.10"
