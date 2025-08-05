@@ -37,9 +37,24 @@ function AddEntryModal({ isOpen, onClose, onAdd, selectedFolder, folders, onAddF
   };
 
   const handleChange = (e) => {
+    let value = e.target.value;
+    
+    // If it's the otp_secret field and contains otpauth://, extract the secret
+    if (e.target.name === 'otp_secret' && value.startsWith('otpauth://')) {
+      try {
+        const url = new URL(value);
+        const secret = url.searchParams.get('secret');
+        if (secret) {
+          value = secret;
+        }
+      } catch (error) {
+        console.warn('Invalid otpauth URL:', error);
+      }
+    }
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: value
     });
   };
 
@@ -131,6 +146,31 @@ function AddEntryModal({ isOpen, onClose, onAdd, selectedFolder, folders, onAddF
               <button type="button" className="cartoon-btn px-2 py-1" onClick={generatePassword} title="Generate strong password"><Icons.Dice size={16} /></button>
               <button type="button" className="cartoon-btn px-2 py-1" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <Icons.EyeOff size={16} /> : <Icons.Eye size={16} />}</button>
             </div>
+          </div>
+          <div>
+            <label htmlFor="otp_secret" className="block text-sm font-medium mb-1">OTP Secret (Optional)</label>
+            <div className="flex items-center gap-2">
+              <input 
+                id="otp_secret" 
+                type="text" 
+                name="otp_secret" 
+                placeholder="Enter OTP secret or otpauth:// URL" 
+                value={formData.otp_secret} 
+                onChange={handleChange} 
+                className="flex-1 border-2 border-black rounded px-3 py-2" 
+              />
+              <button 
+                type="button" 
+                className="cartoon-btn px-2 py-1" 
+                onClick={generateOTPSecret} 
+                title="Generate OTP secret"
+              >
+                <Icons.Dice size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Supports: Base32 secrets, otpauth:// URLs, or Google Authenticator links
+            </p>
           </div>
           <div>
             <label htmlFor="notes" className="block text-sm font-medium mb-1">Notes</label>

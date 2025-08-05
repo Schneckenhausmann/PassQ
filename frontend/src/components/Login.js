@@ -42,12 +42,12 @@ function Login({ onSwitch, onLoginSuccess }) {
   };
 
   return (
-    <div className="auth-form">
-      <h2>Login</h2>
-      {error && <div className="error">{error}</div>}
-      <form onSubmit={handleLogin}>
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-center uppercase tracking-wider">Login</h2>
+      {error && <div className="cartoon-border bg-red-100 text-red-800 p-3 rounded text-sm font-medium">{error}</div>}
+      <form onSubmit={handleLogin} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="username" className="block text-sm font-bold uppercase tracking-wide">Username</label>
           <input
             id="username"
             type="text"
@@ -56,10 +56,11 @@ function Login({ onSwitch, onLoginSuccess }) {
             onChange={(e) => setUsername(e.target.value)}
             required
             disabled={isLoading}
+            className="w-full cartoon-border cartoon-shadow px-3 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
+        <div className="space-y-2">
+          <label htmlFor="password" className="block text-sm font-bold uppercase tracking-wide">Password</label>
           <input
             id="password"
             type="password"
@@ -68,15 +69,16 @@ function Login({ onSwitch, onLoginSuccess }) {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={isLoading}
+            className="w-full cartoon-border cartoon-shadow px-3 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
           />
         </div>
-        <button type="submit" className="btn-primary" disabled={isLoading}>
+        <button type="submit" className="w-full cartoon-btn cartoon-btn-primary py-3 text-sm font-bold uppercase tracking-wider" disabled={isLoading}>
           {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
-      <div className="switch-link">
-        Don't have an account?
-        <button type="button" onClick={onSwitch}>
+      <div className="text-center text-sm">
+        <span className="text-gray-600">Don't have an account? </span>
+        <button type="button" onClick={onSwitch} className="font-bold text-black hover:underline uppercase tracking-wide">
           Register
         </button>
       </div>

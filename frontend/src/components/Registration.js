@@ -54,21 +54,21 @@ function Registration({ onSwitch, onRegistrationSuccess }) {
 
   if (success) {
     return (
-      <div className="registration-container">
-        <h2>Registration Successful!</h2>
-        <p>You will be redirected to the login page shortly...</p>
+      <div className="text-center space-y-4">
+        <h2 className="text-xl font-bold uppercase tracking-wider text-green-700">Registration Successful!</h2>
+        <p className="text-sm text-gray-600">You will be redirected to the login page shortly...</p>
       </div>
     );
   }
 
   return (
-    <div className="auth-form">
-      <h2>Register</h2>
-      {error && <div className="error">{error}</div>}
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-center uppercase tracking-wider">Register</h2>
+      {error && <div className="cartoon-border bg-red-100 text-red-800 p-3 rounded text-sm font-medium">{error}</div>}
       
-      <form onSubmit={handleRegister}>
-        <div className="form-group">
-          <label htmlFor="reg-username">Username</label>
+      <form onSubmit={handleRegister} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="reg-username" className="block text-sm font-bold uppercase tracking-wide">Username</label>
           <input
             id="reg-username"
             type="text"
@@ -77,11 +77,12 @@ function Registration({ onSwitch, onRegistrationSuccess }) {
             onChange={(e) => setUsername(e.target.value)}
             disabled={success}
             required
+            className="w-full cartoon-border cartoon-shadow px-3 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="reg-password">Password</label>
+        <div className="space-y-2">
+          <label htmlFor="reg-password" className="block text-sm font-bold uppercase tracking-wide">Password</label>
           <input
             id="reg-password"
             type="password"
@@ -90,11 +91,12 @@ function Registration({ onSwitch, onRegistrationSuccess }) {
             onChange={(e) => setPassword(e.target.value)}
             disabled={success}
             required
+            className="w-full cartoon-border cartoon-shadow px-3 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="reg-confirm-password">Confirm Password</label>
+        <div className="space-y-2">
+          <label htmlFor="reg-confirm-password" className="block text-sm font-bold uppercase tracking-wide">Confirm Password</label>
           <input
             id="reg-confirm-password"
             type="password"
@@ -103,16 +105,17 @@ function Registration({ onSwitch, onRegistrationSuccess }) {
             onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={success}
             required
+            className="w-full cartoon-border cartoon-shadow px-3 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
           />
         </div>
         
-        <button type="submit" className="btn-primary" disabled={success}>
+        <button type="submit" className="w-full cartoon-btn cartoon-btn-primary py-3 text-sm font-bold uppercase tracking-wider" disabled={success}>
           Register
         </button>
       </form>
-      <div className="switch-link">
-        Already have an account?
-        <button type="button" onClick={onSwitch}>
+      <div className="text-center text-sm">
+        <span className="text-gray-600">Already have an account? </span>
+        <button type="button" onClick={onSwitch} className="font-bold text-black hover:underline uppercase tracking-wide">
           Login
         </button>
       </div>
