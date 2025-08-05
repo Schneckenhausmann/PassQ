@@ -1,23 +1,27 @@
 # Frontend
 
-The frontend is implemented in React with a modern, contemporary design featuring liquid glass elements and a light theme.
+The frontend is implemented in React with a retro cartoon-style design featuring thick black borders and clean aesthetics.
 
 ## Design Features
 
-- **Modern UI**: Glassmorphism effects with translucent backgrounds
-- **Light Theme**: Contemporary color palette with excellent accessibility
-- **Enhanced Readability**: Dark text on light backgrounds for optimal contrast
-- **Accessibility Focused**: High contrast ratios and improved text visibility
+- **Retro Cartoon UI**: Thick 3px black borders with shadow effects
+- **Clean Color Scheme**: Black and white design with selective accent colors
+- **Bold Typography**: Uppercase labels with wide letter spacing for retro feel
+- **Consistent Styling**: Unified design language across all components
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Smooth Animations**: Hover effects and transitions throughout the interface
-- **Typography**: Inter font family for clean, readable text
-- **Interactive Elements**: Modern buttons, forms, and navigation components
+- **Smooth Animations**: Hover effects and button press animations
+- **Enhanced Forms**: Cartoon-styled input fields with focus states
+- **Interactive Elements**: Consistent button styling with shadow effects
 
 ## Recent Updates
 
-- ✅ **Text Contrast**: Improved readability by converting white text to dark colors
-- ✅ **Background Optimization**: Darkened gradients by 30% for better text visibility
-- ✅ **Color Accessibility**: Fixed low-opacity text elements and enhanced contrast ratios
+- ✅ **Retro Design System**: Implemented cartoon-style borders and shadows
+- ✅ **Login/Registration Redesign**: Updated authentication forms with retro aesthetic
+- ✅ **Enhanced OTP Support**: Added otpauth:// URL parsing and multiple input methods
+- ✅ **Border Consistency**: Applied 3px black borders across all components
+- ✅ **Button Unification**: Standardized cartoon-style buttons throughout the app
+- ✅ **Form Field Enhancement**: Improved input styling with cartoon borders
+- ✅ **Typography Upgrade**: Bold, uppercase styling for better visual hierarchy
 
 ## Setup
 
@@ -27,9 +31,13 @@ The frontend is implemented in React with a modern, contemporary design featurin
 
 ## Components
 
-- `App.js`: Main application component
-- `Login.js`: User authentication
-- `Dashboard.js`: Main dashboard
-- `PasswordItem.js`: Individual password entry
-- `FolderTree.js`: Folder structure
-- `ShareModal.js`: Sharing functionality
+- `App.js`: Main application component with retro styling
+- `Login.js`: User authentication with cartoon-styled forms
+- `Registration.js`: User registration with consistent retro design
+- `Dashboard.js`: Main dashboard with cartoon-styled interface
+- `PasswordItem.js`: Individual password entry with OTP support
+- `AddEntryModal.js`: Add password modal with enhanced OTP functionality
+- `EditEntryModal.js`: Edit password modal with otpauth:// URL support
+- `FolderTree.js`: Folder structure with retro styling
+- `ShareModal.js`: Sharing functionality with cartoon borders
+- `Logo.js`: Animated logo component

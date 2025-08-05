@@ -4,6 +4,7 @@ import FolderTree from './FolderTree';
 import AddEntryModal from './AddEntryModal';
 import EditEntryModal from './EditEntryModal';
 import ShareModal from './ShareModal';
+import SearchBar from './SearchBar';
 import { Icons } from './Icons';
 import Logo from './Logo';
 import { passwordAPI, folderAPI } from '../services/api';
@@ -24,6 +25,9 @@ function Dashboard() {
   const [editingEntry, setEditingEntry] = useState(null);
   const [sharedPasswords, setSharedPasswords] = useState([]);
   const [showSharedItems, setShowSharedItems] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
   // Load data from API
   useEffect(() => {
@@ -267,15 +271,29 @@ function Dashboard() {
     }
   };
 
-  // Filter passwords by selected folder or show shared items
+  // Handle search results
+  const handleSearchResults = (results, term) => {
+    setSearchResults(results);
+    setSearchTerm(term);
+    setIsSearchActive(term.length > 0);
+  };
+
+  // Filter passwords by selected folder, search, or show shared items
   const filteredPasswords = showSharedItems 
     ? sharedPasswords
-    : selectedFolder === 'root' 
-      ? passwords 
-      : passwords.filter(password => password.folder_id === selectedFolder);
+    : isSearchActive
+      ? searchResults
+      : selectedFolder === 'root' 
+        ? passwords 
+        : passwords.filter(password => password.folder_id === selectedFolder);
 
   const currentFolder = folders.find(f => f.id === selectedFolder);
-  const listTitle = showSharedItems ? 'Shared with me' : (currentFolder?.name || 'All Items');
+  const getListTitle = () => {
+    if (showSharedItems) return 'Shared with me';
+    if (isSearchActive) return `Search results for "${searchTerm}"`;
+    return currentFolder?.name || 'All Items';
+  };
+  const listTitle = getListTitle();
 
   if (loading) {
     return (
@@ -341,6 +359,13 @@ function Dashboard() {
         </aside>
         {/* Main content: Entries */}
         <main className="flex-1 flex flex-col items-center px-4 pt-4 pb-6 overflow-y-auto">
+          {/* Search Bar */}
+          <SearchBar 
+            passwords={showSharedItems ? sharedPasswords : (selectedFolder === 'root' ? passwords : passwords.filter(p => p.folder_id === selectedFolder))}
+            onFilteredResults={handleSearchResults}
+            placeholder={showSharedItems ? "Search shared items..." : "Search passwords..."}
+          />
+          
           <div className="w-full max-w-2xl flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold">{listTitle}</h2>
