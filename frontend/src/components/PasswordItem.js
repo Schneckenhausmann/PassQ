@@ -76,7 +76,7 @@ function PasswordItem({ id, website, username, password, notes, otp_secret, atta
   const maskedPassword = displayPassword ? '*'.repeat(displayPassword.length) : '';
 
   return (
-    <div className="flex items-center justify-between gap-4 p-4 mb-3 bg-white rounded-xl border border-black shadow cartoon-shadow">
+    <div className="flex items-center justify-between gap-4 p-4 mb-3 bg-white rounded-xl cartoon-border shadow cartoon-shadow">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3 mb-1">
           {faviconUrl && (
