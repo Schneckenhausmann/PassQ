@@ -11,6 +11,7 @@ import { passwordAPI, folderAPI } from '../services/api';
 
 function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [passwords, setPasswords] = useState([]);
   const [folders, setFolders] = useState([
     { id: 'root', name: 'All Items', entryCount: 0, parentId: null },
@@ -316,24 +317,9 @@ function Dashboard() {
 
   return (
     <div className="w-full h-[calc(100vh-56px)] flex flex-col">
-      {/* Hamburger menu for mobile */}
-      <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-black/20 bg-white">
-        <button
-          className="cartoon-btn cartoon-btn-primary p-2"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="Toggle folders menu"
-        >
-          <Icons.Menu size={22} />
-        </button>
-        <h2 className="text-lg font-bold">{listTitle}</h2>
-        <span className="text-black/50">({filteredPasswords.length})</span>
-      </div>
-      <div className="flex flex-1 overflow-hidden bg-white relative">
-        {/* Sidebar: Folders */}
-        <aside
-          className={`z-30 fixed inset-y-0 left-0 w-64 max-w-xs border-r border-black/20 bg-white flex flex-col p-4 overflow-y-auto transform transition-transform duration-200 md:static md:translate-x-0 md:flex md:w-64 md:min-w-[200px] ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative`}
-          style={{ boxShadow: sidebarOpen ? '2px 0 8px rgba(0,0,0,0.08)' : undefined }}
-        >
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden bg-white relative">
+        {/* Desktop Sidebar */}
+        <aside className="hidden md:flex md:flex-col md:w-64 md:min-w-[200px] border-r border-black/20 bg-white p-4 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-lg">Folders</h3>
             <button className="cartoon-btn cartoon-btn-primary p-1" title="Add Folder" onClick={() => handleAddFolder('New Folder')}>
@@ -349,16 +335,39 @@ function Dashboard() {
             onRenameFolder={handleRenameFolder}
             onMoveEntry={handleMoveEntry}
           />
-          {/* Close button for mobile */}
-          <button
-            className="md:hidden cartoon-btn cartoon-btn-primary mt-4"
-            onClick={() => setSidebarOpen(false)}
-          >
-            Close
-          </button>
         </aside>
-        {/* Main content: Entries */}
+
+        {/* Main content */}
         <main className="flex-1 flex flex-col items-center px-4 pt-4 pb-6 overflow-y-auto">
+          {/* Mobile Folder Accordion */}
+          <div className="md:hidden w-full mb-4">
+            <div className="cartoon-border bg-white">
+              <button 
+                className="w-full flex items-center justify-between p-3" 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <h3 className="font-bold text-base">Folders</h3>
+                <Icons.ChevronDown size={20} className={`transform transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {mobileMenuOpen && (
+                <div className="p-4 border-t border-black/20">
+                  <FolderTree 
+                    folders={folders}
+                    selectedFolder={selectedFolder}
+                    onSelectFolder={(folderId) => {
+                      setSelectedFolder(folderId);
+                      setMobileMenuOpen(false);
+                    }}
+                    onAddFolder={handleAddFolder}
+                    onDeleteFolder={handleDeleteFolder}
+                    onRenameFolder={handleRenameFolder}
+                    onMoveEntry={handleMoveEntry}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Search Bar */}
           <SearchBar 
             passwords={showSharedItems ? sharedPasswords : (selectedFolder === 'root' ? passwords : passwords.filter(p => p.folder_id === selectedFolder))}
@@ -366,23 +375,25 @@ function Dashboard() {
             placeholder={showSharedItems ? "Search shared items..." : "Search passwords..."}
           />
           
-          <div className="w-full max-w-2xl flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
+          <div className="w-full max-w-2xl flex flex-col items-center text-center md:flex-row md:justify-between md:text-left mb-6">
+            <div className="mb-4 md:mb-0">
               <h2 className="text-xl font-bold">{listTitle}</h2>
               <span className="text-black/50">({filteredPasswords.length})</span>
             </div>
-            <div className="flex gap-2">
-              <button className="cartoon-btn cartoon-btn-primary flex items-center gap-1" onClick={() => setAddModalOpen(true)}>
-                <Icons.Plus size={16} />
-                <span>Add Entry</span>
-              </button>
-              <button 
-                className={`cartoon-btn flex items-center gap-1 ${showSharedItems ? 'cartoon-btn-primary' : ''}`} 
-                onClick={() => setShowSharedItems(!showSharedItems)}
-              >
-                <Icons.Share size={16} />
-                <span>{showSharedItems ? 'My Items' : 'Shared Items'}</span>
-              </button>
+            <div className="flex flex-col md:flex-row gap-2 items-center">
+              <div className="flex gap-2">
+                  <button className="cartoon-btn cartoon-btn-primary flex items-center gap-1" onClick={() => setAddModalOpen(true)}>
+                    <Icons.Plus size={16} />
+                    <span>Add Entry</span>
+                  </button>
+                  <button 
+                    className={`cartoon-btn flex items-center gap-1 ${showSharedItems ? 'cartoon-btn-primary' : ''}`} 
+                    onClick={() => setShowSharedItems(!showSharedItems)}
+                  >
+                    <Icons.Share size={16} />
+                    <span>{showSharedItems ? 'My Items' : 'Shared Items'}</span>
+                  </button>
+              </div>
             </div>
           </div>
           <div className="w-full max-w-2xl">

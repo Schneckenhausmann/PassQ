@@ -61,10 +61,10 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
     return (
       <li key={folder.id} className="folder-item-container group">
         <div 
-          className={`folder-item flex items-center justify-between py-2 px-3 border border-transparent hover:border-black hover:bg-gray-100 cursor-pointer transition-all ${
-            selectedFolder === folder.id ? 'bg-black text-white border-black' : 'text-black'
+          className={`folder-item flex items-center justify-between py-2 px-3 cartoon-border hover:cartoon-shadow hover:bg-gray-100 cursor-pointer transition-all ${
+            selectedFolder === folder.id ? 'bg-black text-white border-black cartoon-shadow' : 'text-black border-transparent'
           } ${
-            dragOverFolder === folder.id ? 'bg-gray-200 border-black' : ''
+            dragOverFolder === folder.id ? 'bg-gray-200 border-black cartoon-shadow' : ''
           }`}
           style={{ marginLeft: `${level * 16}px` }}
           onDragOver={(e) => handleDragOver(e, folder.id)}
@@ -73,22 +73,23 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
           onClick={() => onSelectFolder(folder.id)}
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            {/* Tree structure indicator - markdown style */}
+            {/* Tree structure indicator - thick cartoon style */}
             {level > 0 && (
-              <div className="flex items-center text-black font-mono text-xs">
+              <div className="flex items-center text-black font-bold text-sm leading-none">
                 {Array.from({ length: level }, (_, i) => (
-                  <span key={i} className="w-4">
-                    {i === level - 1 ? '├─' : '│ '}
+                  <span key={i} className="w-5 flex justify-center">
+                    {i === level - 1 ? '┣' : '┃'}
                   </span>
                 ))}
+                <span className="w-2 text-black font-bold">━</span>
               </div>
             )}
             
             {/* Expand/collapse button */}
             {hasSubfolders && (
               <button 
-                className={`w-4 h-4 flex items-center justify-center hover:bg-gray-200 rounded ${
-                  selectedFolder === folder.id ? 'text-white hover:bg-gray-700' : 'text-black'
+                className={`w-5 h-5 flex items-center justify-center cartoon-border cartoon-btn hover:cartoon-shadow ${
+                  selectedFolder === folder.id ? 'text-white bg-gray-700' : 'text-black bg-white'
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -96,18 +97,18 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
                 }}
               >
                 {isExpanded ? 
-                  <span className="text-xs font-bold">−</span> : 
-                  <span className="text-xs font-bold">+</span>
+                  <span className="text-sm font-bold">−</span> : 
+                  <span className="text-sm font-bold">+</span>
                 }
               </button>
             )}
-            {!hasSubfolders && <div className="w-4" />}
+            {!hasSubfolders && <div className="w-5" />}
             
             {/* Folder icon */}
-            <span className={`flex-shrink-0 font-bold text-sm ${
+            <span className={`flex-shrink-0 font-bold text-lg ${
               selectedFolder === folder.id ? 'text-white' : 'text-black'
             }`}>
-              {isExpanded && hasSubfolders ? '▼' : '▶'}
+              {isExpanded && hasSubfolders ? '📂' : '📁'}
             </span>
             
             {/* Folder name and count */}
@@ -117,7 +118,7 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
                   type="text"
                   value={renameValue}
                   onChange={(e) => setRenameValue(e.target.value)}
-                  className="flex-1 px-2 py-1 text-sm border border-black bg-white text-black"
+                  className="flex-1 px-2 py-1 text-sm cartoon-border bg-white text-black"
                   autoFocus
                   onBlur={handleRenameCancel}
                   onKeyDown={(e) => {
@@ -143,8 +144,8 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
           {renamingFolder !== folder.id && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button 
-                className={`p-1 border border-transparent hover:border-black hover:bg-gray-200 transition-all ${
-                  selectedFolder === folder.id ? 'text-white hover:bg-gray-700 hover:border-white' : 'text-black'
+                className={`p-1 cartoon-border cartoon-btn hover:cartoon-shadow transition-all ${
+                  selectedFolder === folder.id ? 'text-white bg-gray-700' : 'text-black bg-white'
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -154,13 +155,13 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
                 }}
                 title="Add subfolder"
               >
-                <span className="text-xs font-bold">+</span>
+                <span className="text-sm font-bold">+</span>
               </button>
               {folder.id !== 'root' && (
                 <>
                   <button 
-                    className={`p-1 border border-transparent hover:border-black hover:bg-gray-200 transition-all ${
-                      selectedFolder === folder.id ? 'text-white hover:bg-gray-700 hover:border-white' : 'text-black'
+                    className={`p-1 cartoon-border cartoon-btn hover:cartoon-shadow transition-all ${
+                      selectedFolder === folder.id ? 'text-white bg-gray-700' : 'text-black bg-white'
                     }`}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -168,11 +169,11 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
                     }}
                     title="Rename folder"
                   >
-                    <span className="text-xs font-bold">✎</span>
+                    <span className="text-sm font-bold">✎</span>
                   </button>
                   <button 
-                    className={`p-1 border border-transparent hover:border-black hover:bg-gray-200 transition-all ${
-                      selectedFolder === folder.id ? 'text-white hover:bg-gray-700 hover:border-white' : 'text-black'
+                    className={`p-1 cartoon-border cartoon-btn hover:cartoon-shadow transition-all ${
+                      selectedFolder === folder.id ? 'text-white bg-gray-700' : 'text-black bg-white'
                     }`}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -182,7 +183,7 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
                     }}
                     title="Delete folder"
                   >
-                    <span className="text-xs font-bold">×</span>
+                    <span className="text-sm font-bold">×</span>
                   </button>
                 </>
               )}
@@ -193,7 +194,7 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
         {addingSubfolderTo === folder.id && showAddForm && (
           <form 
             onSubmit={(e) => handleAddFolder(e, folder.id)} 
-            className="py-2 px-3 border border-black bg-gray-50"
+            className="py-2 px-3 cartoon-border bg-gray-50 cartoon-shadow"
             style={{ marginLeft: `${(level + 1) * 16}px` }}
           >
             <div className="flex items-center gap-2">
@@ -202,18 +203,18 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onRenameFolder, onMo
                 placeholder="Subfolder name"
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
-                className="flex-1 px-2 py-1 text-sm border border-black bg-white text-black"
+                className="flex-1 px-2 py-1 text-sm cartoon-border bg-white text-black"
                 autoFocus
               />
               <button 
                 type="submit" 
-                className="px-3 py-1 text-xs font-bold border border-black bg-black text-white hover:bg-gray-800 transition-colors"
+                className="px-3 py-1 text-sm font-bold cartoon-border cartoon-btn-primary hover:cartoon-shadow transition-all"
               >
                 Add
               </button>
               <button 
                 type="button" 
-                className="px-3 py-1 text-xs font-bold border border-black bg-white text-black hover:bg-gray-100 transition-colors"
+                className="px-3 py-1 text-sm font-bold cartoon-border cartoon-btn hover:cartoon-shadow transition-all"
                 onClick={() => {
                   setShowAddForm(false);
                   setNewFolderName('');
