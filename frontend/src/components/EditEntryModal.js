@@ -93,7 +93,7 @@ function EditEntryModal({ isOpen, onClose, onSave, entry, folders, onAddFolder }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
-      <div className="relative bg-white rounded-xl shadow-2xl cartoon-shadow p-6 w-full max-w-md mx-auto border border-black" onClick={(e) => e.stopPropagation()}>
+      <div className="relative bg-white rounded-xl shadow-2xl cartoon-shadow p-6 w-full max-w-md mx-auto cartoon-border" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold">Edit Entry</h3>
           <button className="text-black/60 hover:text-black transition" onClick={onClose}>
