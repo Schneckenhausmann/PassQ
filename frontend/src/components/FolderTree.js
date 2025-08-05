@@ -170,46 +170,6 @@ function FolderTree({ folders, onAddFolder, onDeleteFolder, onMoveEntry, selecte
 
   return (
     <div className="folder-tree">
-      <div className="folder-header">
-        <h3>Folders</h3>
-        <button 
-          className="btn-secondary add-folder-btn"
-          onClick={() => {
-            setShowAddForm(!showAddForm);
-            setAddingSubfolderTo(null);
-            setNewFolderName('');
-          }}
-          title="Add new folder"
-        >
-          <Icons.FolderPlus size={16} />
-        </button>
-      </div>
-      
-      {showAddForm && !addingSubfolderTo && (
-        <form onSubmit={(e) => handleAddFolder(e)} className="add-folder-form">
-          <input
-            type="text"
-            placeholder="Folder name"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            autoFocus
-          />
-          <div className="form-actions">
-            <button type="submit" className="btn-primary">Add</button>
-            <button 
-              type="button" 
-              className="btn-secondary"
-              onClick={() => {
-                setShowAddForm(false);
-                setNewFolderName('');
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-      
       <ul className="folder-list">
         {folders.filter(folder => !folder.parentId || folder.parentId === 'root').map(folder => renderFolder(folder))}
       </ul>
