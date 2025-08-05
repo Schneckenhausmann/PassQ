@@ -52,6 +52,25 @@ function PasswordItem({ id, website, username, password, notes, otp_secret, atta
     }
   };
 
+  // Extract domain for favicon
+  const extractDomain = (url) => {
+    try {
+      if (!url) return '';
+      // Remove protocol if present
+      let domain = url.replace(/^https?:\/\//, '');
+      // Remove www. if present
+      domain = domain.replace(/^www\./, '');
+      // Remove path and query parameters
+      domain = domain.split('/')[0].split('?')[0];
+      return domain;
+    } catch {
+      return url || '';
+    }
+  };
+
+  const domain = extractDomain(website);
+  const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : null;
+
   // Ensure we have a valid password to display
   const displayPassword = password && typeof password === 'string' ? password : '';
   const maskedPassword = displayPassword ? '*'.repeat(displayPassword.length) : '';
@@ -59,7 +78,23 @@ function PasswordItem({ id, website, username, password, notes, otp_secret, atta
   return (
     <div className="flex items-center justify-between gap-4 p-4 mb-3 bg-white rounded-xl border border-black shadow cartoon-shadow">
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-lg truncate">{website}</div>
+        <div className="flex items-center gap-3 mb-1">
+          {faviconUrl && (
+            <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center bg-gray-100 rounded border">
+              <img 
+                src={faviconUrl} 
+                alt="" 
+                className="w-4 h-4 rounded" 
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentElement.innerHTML = '🌐';
+                  e.target.parentElement.className = 'w-5 h-5 flex-shrink-0 flex items-center justify-center bg-gray-100 rounded border text-xs';
+                }}
+              />
+            </div>
+          )}
+          <div className="font-semibold text-lg truncate">{website}</div>
+        </div>
         <div className="text-sm text-black/60 truncate">{username}</div>
         <div className="mt-1">
           <span className="font-mono tracking-wider text-base select-all text-black">

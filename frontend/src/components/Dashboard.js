@@ -85,7 +85,9 @@ function Dashboard() {
   const updateFolderCounts = (updatedPasswords, updatedFolders) => {
     const counts = {};
     updatedPasswords.forEach(password => {
-      counts[password.folderId] = (counts[password.folderId] || 0) + 1;
+      // Use folder_id from API response
+      const folderId = password.folder_id || 'root';
+      counts[folderId] = (counts[folderId] || 0) + 1;
     });
     
     const foldersWithCounts = updatedFolders.map(folder => ({
@@ -128,7 +130,7 @@ function Dashboard() {
       
       // Move all entries from deleted folder to parent folder
       const updatedPasswords = passwords.map(password => 
-        password.folderId === folderId ? { ...password, folderId: parentId } : password
+        password.folder_id === folderId ? { ...password, folder_id: parentId } : password
       );
       
       // Move all subfolders to parent folder
@@ -147,6 +149,24 @@ function Dashboard() {
     } catch (err) {
       console.error('Error deleting folder:', err);
       setError('Failed to delete folder');
+    }
+  };
+
+  const handleRenameFolder = async (folderId, newName) => {
+    if (folderId === 'root' || !newName.trim()) return;
+    
+    try {
+      const response = await folderAPI.update(folderId, { name: newName.trim() });
+      const updatedFolder = response.data.data;
+      
+      const updatedFolders = folders.map(folder => 
+        folder.id === folderId ? { ...folder, name: updatedFolder.name } : folder
+      );
+      
+      setFolders(updatedFolders);
+    } catch (err) {
+      console.error('Error renaming folder:', err);
+      setError('Failed to rename folder');
     }
   };
 
@@ -308,6 +328,7 @@ function Dashboard() {
             onSelectFolder={setSelectedFolder}
             onAddFolder={handleAddFolder}
             onDeleteFolder={handleDeleteFolder}
+            onRenameFolder={handleRenameFolder}
             onMoveEntry={handleMoveEntry}
           />
           {/* Close button for mobile */}
@@ -319,7 +340,7 @@ function Dashboard() {
           </button>
         </aside>
         {/* Main content: Entries */}
-        <main className="flex-1 flex flex-col items-center px-4 py-6 overflow-y-auto">
+        <main className="flex-1 flex flex-col items-center px-4 pt-4 pb-6 overflow-y-auto">
           <div className="w-full max-w-2xl flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold">{listTitle}</h2>
