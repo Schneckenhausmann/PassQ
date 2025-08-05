@@ -13,6 +13,9 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
+# Set environment variable for Docker build
+ENV REACT_APP_API_URL=""
+
 # Build the React app
 RUN npm run build
 

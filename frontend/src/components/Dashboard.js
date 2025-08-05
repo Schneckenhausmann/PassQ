@@ -9,6 +9,7 @@ import Logo from './Logo';
 import { passwordAPI, folderAPI } from '../services/api';
 
 function Dashboard() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [passwords, setPasswords] = useState([]);
   const [folders, setFolders] = useState([
     { id: 'root', name: 'All Items', entryCount: 0, parentId: null },
@@ -277,10 +278,24 @@ function Dashboard() {
 
   return (
     <div className="w-full h-[calc(100vh-56px)] flex flex-col">
-      {/* Main layout */}
-      <div className="flex flex-1 overflow-hidden bg-white">
+      {/* Hamburger menu for mobile */}
+      <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-black/20 bg-white">
+        <button
+          className="cartoon-btn cartoon-btn-primary p-2"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label="Toggle folders menu"
+        >
+          <Icons.Menu size={22} />
+        </button>
+        <h2 className="text-lg font-bold">{listTitle}</h2>
+        <span className="text-black/50">({filteredPasswords.length})</span>
+      </div>
+      <div className="flex flex-1 overflow-hidden bg-white relative">
         {/* Sidebar: Folders */}
-        <aside className="w-64 min-w-[200px] max-w-xs border-r border-black/20 bg-white flex flex-col p-4 overflow-y-auto">
+        <aside
+          className={`z-30 fixed inset-y-0 left-0 w-64 max-w-xs border-r border-black/20 bg-white flex flex-col p-4 overflow-y-auto transform transition-transform duration-200 md:static md:translate-x-0 md:flex md:w-64 md:min-w-[200px] ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative`}
+          style={{ boxShadow: sidebarOpen ? '2px 0 8px rgba(0,0,0,0.08)' : undefined }}
+        >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-lg">Folders</h3>
             <button className="cartoon-btn cartoon-btn-primary p-1" title="Add Folder" onClick={() => handleAddFolder('New Folder')}>
@@ -295,6 +310,13 @@ function Dashboard() {
             onDeleteFolder={handleDeleteFolder}
             onMoveEntry={handleMoveEntry}
           />
+          {/* Close button for mobile */}
+          <button
+            className="md:hidden cartoon-btn cartoon-btn-primary mt-4"
+            onClick={() => setSidebarOpen(false)}
+          >
+            Close
+          </button>
         </aside>
         {/* Main content: Entries */}
         <main className="flex-1 flex flex-col items-center px-4 py-6 overflow-y-auto">

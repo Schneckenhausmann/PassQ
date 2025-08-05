@@ -83,7 +83,8 @@ function PasswordItem({ id, website, username, password, notes, otp_secret, atta
       </div>
       <div className="flex flex-col gap-2 items-end">
         <button className="cartoon-btn px-2 py-1" onClick={() => onEdit && onEdit(id)} title="Edit entry"><Icons.Edit size={16} /></button>
-        <button className="cartoon-btn px-2 py-1" onClick={onDelete} title="Delete entry"><Icons.Trash size={16} /></button>
+        <button className="cartoon-btn px-2 py-1" onClick={() => onShare && onShare(id)} title="Share entry"><Icons.Share size={16} /></button>
+        <button className="cartoon-btn px-2 py-1" onClick={() => onDelete && onDelete(id)} title="Delete entry"><Icons.Trash size={16} /></button>
       </div>
     </div>
   );
