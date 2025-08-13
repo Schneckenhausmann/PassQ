@@ -159,6 +159,17 @@ Content-Type: application/json
 
 DELETE /passwords/{id}
 Authorization: Bearer <jwt_token>
+
+PUT /passwords/{id}/move
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+GET /passwords/{id}/otp
+Authorization: Bearer <jwt_token>
+
+POST /passwords/{id}/share
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
 ```
 
 #### Folder Management
@@ -171,6 +182,22 @@ Authorization: Bearer <jwt_token>
 Content-Type: application/json
 
 DELETE /folders/{id}
+Authorization: Bearer <jwt_token>
+
+POST /folders/{id}/share
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+#### Sharing Management
+```
+GET /shared
+Authorization: Bearer <jwt_token>
+
+GET /shared/passwords
+Authorization: Bearer <jwt_token>
+
+DELETE /shares/{id}
 Authorization: Bearer <jwt_token>
 ```
 
@@ -271,16 +298,24 @@ pub struct ApiResponse<T> {
 ### Core Dependencies
 - `actix-web`: Web framework for HTTP server
 - `actix-cors`: CORS middleware for cross-origin requests
-- `diesel`: ORM for database operations
+- `diesel`: ORM for database operations with PostgreSQL, UUID, and JSON support
 - `bcrypt`: Password hashing library
 - `jsonwebtoken`: JWT token handling
-- `uuid`: Unique identifier generation
-- `serde`: Serialization/deserialization
+- `uuid`: Unique identifier generation with v4 and serde support
+- `serde`: Serialization/deserialization with derive macros
+- `serde_json`: JSON serialization support
 - `dotenv`: Environment variable management
+- `r2d2`: Database connection pooling
+- `chrono`: Date and time handling with serde support
 
 ### Security Dependencies
-- `ring`: Cryptographic operations (when implemented)
+- `ring`: Cryptographic operations for AES-256-GCM encryption
 - `regex`: Input validation patterns
+- `totp-rs`: Time-based One-Time Password (TOTP) implementation
+
+### Logging Dependencies
+- `log`: Logging facade
+- `env_logger`: Environment-based logging configuration
 
 ## Recent Security Enhancements ✅
 

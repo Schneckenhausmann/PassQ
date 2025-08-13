@@ -31,13 +31,16 @@ The frontend is implemented in React with a retro cartoon-style design featuring
 
 ## Components
 
-- `App.js`: Main application component with retro styling
+- `App.js`: Main application component with retro styling and authentication state management
 - `Login.js`: User authentication with cartoon-styled forms
 - `Registration.js`: User registration with consistent retro design
-- `Dashboard.js`: Main dashboard with cartoon-styled interface
-- `PasswordItem.js`: Individual password entry with OTP support
+- `Dashboard.js`: Main dashboard with cartoon-styled interface and full password management
+- `PasswordItem.js`: Individual password entry with OTP support and favicon display
 - `AddEntryModal.js`: Add password modal with enhanced OTP functionality
 - `EditEntryModal.js`: Edit password modal with otpauth:// URL support
-- `FolderTree.js`: Folder structure with retro styling
+- `FolderTree.js`: Folder structure with retro styling and drag-drop support
 - `ShareModal.js`: Sharing functionality with cartoon borders
-- `Logo.js`: Animated logo component
+- `SearchBar.js`: Real-time search functionality with cartoon styling
+- `Icons.js`: Comprehensive icon library for UI elements
+- `Logo.js`: Original animated logo component
+- `NewLogo.js`: Updated logo component with enhanced styling

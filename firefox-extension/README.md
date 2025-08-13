@@ -39,8 +39,8 @@ For production use, the extension would need to be packaged and submitted to Moz
 
 ### Initial Setup
 
-1. **Start PassQ Backend**: Ensure your PassQ backend is running on `http://localhost:5000`
-2. **Start PassQ Frontend**: Ensure your PassQ frontend is running on `http://localhost:3000`
+1. **Start PassQ Backend**: Ensure your PassQ backend is running on `http://localhost:8080`
+2. **Start PassQ Frontend**: Ensure your PassQ frontend is running on `http://localhost:80` (or `http://localhost:3000` for development)
 3. **Click Extension Icon**: Click the PassQ icon in your Firefox toolbar
 4. **Login**: Enter your PassQ credentials in the popup
 
