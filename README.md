@@ -372,13 +372,6 @@ For issues, questions, or contributions:
 3. Include steps to reproduce for bugs
 4. Provide system information and logs when relevant
 
-## 🔗 Links
-
-- **Repository**: [GitHub Repository URL]
-- **Documentation**: Additional docs in the `/docs` folder
-- **Issues**: [GitHub Issues URL]
-- **Releases**: [GitHub Releases URL]
-
 ---
 
 **PassQ** - Secure, stylish, and user-friendly password management for the modern web.
