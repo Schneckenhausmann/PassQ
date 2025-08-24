@@ -26,6 +26,11 @@ mod handlers {
         pub csv_data: String,
     }
 
+    #[derive(Deserialize)]
+    pub struct CsvExportRequest {
+        pub password: String,
+    }
+
     #[derive(Serialize)]
     pub struct CsvExportEntry {
         pub name: String,
@@ -1118,9 +1123,10 @@ mod handlers {
     // CSV Export handler
     pub async fn export_csv(
         req: actix_web::HttpRequest,
+        export_data: web::Json<CsvExportRequest>,
         db_pool: web::Data<db::DbPool>,
     ) -> Result<HttpResponse, Error> {
-        use crate::schema::{passwords, folders};
+        use crate::schema::{passwords, folders, users};
         
         // Authenticate user
         let current_user_id = match auth::extract_user_id_from_request(&req) {
@@ -1134,6 +1140,19 @@ mod handlers {
             log::error!("Failed to get database connection: {}", e);
             actix_web::error::ErrorInternalServerError("Database connection error")
         })?;
+        
+        // Verify user password before allowing export
+        let user = users::table
+            .filter(users::id.eq(current_user_id))
+            .first::<User>(&mut conn)
+            .map_err(|e| {
+                log::error!("Database error: {}", e);
+                actix_web::error::ErrorInternalServerError("Database error")
+            })?;
+        
+        if !auth::verify_password(&export_data.password, &user.password_hash) {
+            return Ok(HttpResponse::Unauthorized().json(ApiResponse::<()>::error("Invalid password".to_string())));
+        }
         
         // Get all passwords for the user
         let user_passwords = passwords::table
@@ -1580,7 +1599,7 @@ async fn main() -> std::io::Result<()> {
             // CSV endpoints
             .service(
                 web::resource("/export/csv")
-                    .route(web::get().to(handlers::export_csv))
+                    .route(web::post().to(handlers::export_csv))
             )
             .service(
                 web::resource("/import/csv")

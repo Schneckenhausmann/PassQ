@@ -66,12 +66,29 @@ export const folderAPI = {
 
 // CSV API
 export const csvAPI = {
-  export: () => api.get('/export/csv', {
-    responseType: 'blob',
-    headers: {
-      'Accept': 'text/csv',
-    },
-  }),
+  export: async (password) => {
+    try {
+      const response = await api.post('/export/csv', { password }, {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'text/csv',
+        },
+      });
+      return response;
+    } catch (error) {
+      // Handle error responses that come as blobs
+      if (error.response && error.response.data instanceof Blob) {
+        const text = await error.response.data.text();
+        try {
+          const errorData = JSON.parse(text);
+          throw new Error(errorData.message || 'Export failed');
+        } catch {
+          throw new Error('Export failed');
+        }
+      }
+      throw error;
+    }
+  },
   import: (csvData) => api.post('/import/csv', { csv_data: csvData }),
 };
 

@@ -191,5 +191,27 @@ export const Icons = {
       <polyline points="17,8 12,3 7,8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
     </svg>
+  ),
+
+  Shield: ({ size = 16, className = '' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M12 22S2 17 2 9C2 9 2 4 12 2C22 4 22 9 22 9C22 17 12 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+
+  AlertTriangle: ({ size = 16, className = '' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M10.29 3.86L1.82 18C1.64466 18.3024 1.55611 18.6453 1.56331 18.9945C1.57051 19.3437 1.67319 19.6831 1.86 19.98C2.04681 20.2769 2.31259 20.5183 2.6295 20.6792C2.9464 20.8401 3.30267 20.9143 3.66 20.89H20.5C20.8573 20.9143 21.2136 20.8401 21.5305 20.6792C21.8474 20.5183 22.1132 20.2769 22.3 19.98C22.4868 19.6831 22.5895 19.3437 22.5967 18.9945C22.6039 18.6453 22.5153 18.3024 22.34 18L13.87 3.86C13.6803 3.56611 13.4132 3.32312 13.0955 3.15448C12.7778 2.98585 12.4193 2.89725 12.055 2.89725C11.6907 2.89725 11.3322 2.98585 11.0145 3.15448C10.6968 3.32312 10.4297 3.56611 10.24 3.86H10.29Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  ),
+
+  AlertCircle: ({ size = 16, className = '' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+      <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
   )
 };

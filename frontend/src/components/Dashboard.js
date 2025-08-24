@@ -4,6 +4,7 @@ import FolderTree from './FolderTree';
 import AddEntryModal from './AddEntryModal';
 import EditEntryModal from './EditEntryModal';
 import ShareModal from './ShareModal';
+import PasswordConfirmationModal from './PasswordConfirmationModal';
 import SearchBar from './SearchBar';
 import { Icons } from './Icons';
 import Logo from './Logo';
@@ -29,6 +30,7 @@ function Dashboard() {
   const [searchResults, setSearchResults] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [isPasswordConfirmModalOpen, setIsPasswordConfirmModalOpen] = useState(false);
 
   // Load data from API
   useEffect(() => {
@@ -42,9 +44,6 @@ function Dashboard() {
         passwordAPI.getAll(),
         folderAPI.getAll()
       ]);
-      
-      console.log('Passwords API Response:', passwordsResponse.data);
-      console.log('Raw passwords data:', passwordsResponse.data.data);
       
       setPasswords(passwordsResponse.data.data || []);
       const apiFolders = foldersResponse.data.data || [];
@@ -87,23 +86,27 @@ function Dashboard() {
   };
 
   // CSV Export/Import handlers
-  const handleExportCSV = async () => {
+  const handleExportCSV = () => {
+    setIsPasswordConfirmModalOpen(true);
+  };
+
+  const handleConfirmExport = async (password) => {
     try {
-      const response = await csvAPI.export();
+      const response = await csvAPI.export(password);
       
       // Create blob and download
       const blob = new Blob([response.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'passq_export.csv';
+      link.download = `passq_export_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error exporting CSV:', err);
-      setError('Failed to export passwords');
+      throw err; // Re-throw the error as-is since csvAPI.export now handles error parsing
     }
   };
 
@@ -537,6 +540,13 @@ function Dashboard() {
         entry={editingEntry}
         folders={folders}
         onAddFolder={handleAddFolder}
+      />
+      <PasswordConfirmationModal
+        isOpen={isPasswordConfirmModalOpen}
+        onClose={() => setIsPasswordConfirmModalOpen(false)}
+        onConfirm={handleConfirmExport}
+        title="Export Passwords"
+        message="You are about to export all your passwords to a CSV file. This file will contain sensitive information in plain text."
       />
     </div>
   );

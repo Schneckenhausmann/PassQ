@@ -202,9 +202,16 @@ DELETE /shares/{id}
 
 #### CSV Import/Export
 ```
-GET /export/csv
+POST /export/csv
 Authorization: Bearer <jwt_token>
-Response: text/csv
+Content-Type: application/json
+
+{
+  "password": "user_master_password"
+}
+
+Response: text/csv (on success)
+Error Response (401): {"success": false, "message": "Invalid password"}
 
 POST /import/csv
 Authorization: Bearer <jwt_token>
@@ -257,6 +264,13 @@ Example Site,https://example.com,user@example.com,password123,,false,false,Work,
 - Empty or missing essential fields are handled gracefully
 - Duplicate entries are imported as separate records
 - Import errors are reported with specific line numbers
+
+**CSV Export Security**:
+- Requires valid JWT authentication token
+- **Password re-verification**: Users must provide their master password to export data
+- Password verification uses the same bcrypt hashing as login authentication
+- Prevents unauthorized data exports even with valid session tokens
+- Returns 401 Unauthorized if password verification fails
 
 ## Data Models
 

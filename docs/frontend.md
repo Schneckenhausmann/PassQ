@@ -54,10 +54,11 @@ Component for displaying and managing folder structure with subfolders.
 The application includes comprehensive CSV import/export capabilities for password data migration and backup.
 
 ### Export Features
-- **One-click export**: Export all passwords and folders to CSV format
+- **Secure export with password confirmation**: Export requires user to re-enter their master password for verification
+- **One-click export**: Export all passwords and folders to CSV format after password confirmation
 - **Standard format**: Compatible with common password managers (Bitwarden, LastPass, etc.)
 - **Automatic download**: CSV file automatically downloads with timestamp
-- **Secure handling**: Export requires authentication and includes only user's own data
+- **Enhanced security**: Export requires both JWT authentication and password re-verification
 
 ### Import Features
 - **File upload interface**: Drag-and-drop or click to select CSV files
@@ -91,9 +92,11 @@ The import functionality automatically detects and supports the following format
 
 ### Security Considerations
 - All CSV operations require valid JWT authentication
+- **CSV export requires password re-verification**: Users must confirm their master password before exporting data
 - Exported data maintains encryption for sensitive fields
 - Import validation prevents malicious data injection
 - File processing happens client-side before server transmission
+- Password confirmation modal prevents unauthorized data exports
 
 ### ShareModal.js
 Modal component for sharing folders or entries with other users.
