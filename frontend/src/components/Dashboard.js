@@ -7,7 +7,7 @@ import ShareModal from './ShareModal';
 import SearchBar from './SearchBar';
 import { Icons } from './Icons';
 import Logo from './Logo';
-import { passwordAPI, folderAPI } from '../services/api';
+import { passwordAPI, folderAPI, csvAPI } from '../services/api';
 
 function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -84,6 +84,54 @@ function Dashboard() {
     setShareItem(null);
     // Optionally reload shared items
     loadSharedItems();
+  };
+
+  // CSV Export/Import handlers
+  const handleExportCSV = async () => {
+    try {
+      const response = await csvAPI.export();
+      
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'passq_export.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exporting CSV:', err);
+      setError('Failed to export passwords');
+    }
+  };
+
+  const handleImportCSV = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const response = await csvAPI.import(text);
+      
+      // Reload data to show imported passwords
+      await loadData();
+      
+      // Show success message
+      const importedCount = response.data.data;
+      alert(`Successfully imported ${importedCount} passwords`);
+    } catch (err) {
+      console.error('Error importing CSV:', err);
+      setError('Failed to import passwords. Please check the CSV format.');
+    }
+    
+    // Reset file input
+    event.target.value = '';
+  };
+
+  const triggerFileInput = () => {
+    document.getElementById('csv-import-input').click();
   };
 
   // Update folder entry counts
@@ -381,7 +429,7 @@ function Dashboard() {
               <span className="text-black/50">({filteredPasswords.length})</span>
             </div>
             <div className="flex flex-col md:flex-row gap-2 items-center">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                   <button className="cartoon-btn cartoon-btn-primary flex items-center gap-1" onClick={() => setAddModalOpen(true)}>
                     <Icons.Plus size={16} />
                     <span>Add Entry</span>
@@ -393,6 +441,33 @@ function Dashboard() {
                     <Icons.Share size={16} />
                     <span>{showSharedItems ? 'My Items' : 'Shared Items'}</span>
                   </button>
+                  {!showSharedItems && (
+                    <>
+                      <button 
+                        className="cartoon-btn flex items-center gap-1" 
+                        onClick={handleExportCSV}
+                        title="Export passwords to CSV"
+                      >
+                        <Icons.Download size={16} />
+                        <span>Export CSV</span>
+                      </button>
+                      <button 
+                        className="cartoon-btn flex items-center gap-1" 
+                        onClick={triggerFileInput}
+                        title="Import passwords from CSV"
+                      >
+                        <Icons.Upload size={16} />
+                        <span>Import CSV</span>
+                      </button>
+                      <input
+                        id="csv-import-input"
+                        type="file"
+                        accept=".csv"
+                        onChange={handleImportCSV}
+                        style={{ display: 'none' }}
+                      />
+                    </>
+                  )}
               </div>
             </div>
           </div>

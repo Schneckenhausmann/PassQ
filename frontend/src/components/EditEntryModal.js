@@ -68,7 +68,7 @@ function EditEntryModal({ isOpen, onClose, onSave, entry, folders, onAddFolder }
     for (let i = 0; i < 16; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setFormData({ ...formData, password });
+    setFormData(prevData => ({ ...prevData, password }));
   };
 
   const generateOTPSecret = () => {
@@ -77,7 +77,7 @@ function EditEntryModal({ isOpen, onClose, onSave, entry, folders, onAddFolder }
     for (let i = 0; i < 32; i++) {
       secret += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setFormData({ ...formData, otp_secret: secret });
+    setFormData(prevData => ({ ...prevData, otp_secret: secret }));
   };
 
   const handleCreateFolder = () => {

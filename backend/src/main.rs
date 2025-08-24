@@ -18,6 +18,23 @@ mod handlers {
     use uuid::Uuid;
     use crate::{auth, db, crypto, mfa, models::{UserRegistration, UserLogin, ApiResponse, NewUser, User, Password, NewPassword, PasswordRequest, PasswordMoveRequest, PasswordResponse, Folder, NewFolder, FolderRequest, Share, ShareRequest}};
     use diesel::prelude::*;
+    use serde::{Deserialize, Serialize};
+    use std::collections::HashMap;
+
+    #[derive(Deserialize)]
+    pub struct CsvImportRequest {
+        pub csv_data: String,
+    }
+
+    #[derive(Serialize)]
+    pub struct CsvExportEntry {
+        pub name: String,
+        pub url: String,
+        pub username: String,
+        pub password: String,
+        pub notes: String,
+        pub folder: String,
+    }
     
     // User registration handler
     pub async fn register(
@@ -1097,6 +1114,378 @@ mod handlers {
         log::info!("Share {} removed successfully by user {}", share_id, current_user_id);
         Ok(HttpResponse::Ok().json(ApiResponse::<()>::success("Share removed successfully".to_string(), None)))
     }
+
+    // CSV Export handler
+    pub async fn export_csv(
+        req: actix_web::HttpRequest,
+        db_pool: web::Data<db::DbPool>,
+    ) -> Result<HttpResponse, Error> {
+        use crate::schema::{passwords, folders};
+        
+        // Authenticate user
+        let current_user_id = match auth::extract_user_id_from_request(&req) {
+            Ok(user_id) => user_id,
+            Err(_) => {
+                return Ok(HttpResponse::Unauthorized().json(ApiResponse::<()>::error("Invalid or missing token".to_string())));
+            }
+        };
+        
+        let mut conn = db_pool.get().map_err(|e| {
+            log::error!("Failed to get database connection: {}", e);
+            actix_web::error::ErrorInternalServerError("Database connection error")
+        })?;
+        
+        // Get all passwords for the user
+        let user_passwords = passwords::table
+            .filter(passwords::user_id.eq(current_user_id))
+            .load::<Password>(&mut conn)
+            .map_err(|e| {
+                log::error!("Database error: {}", e);
+                actix_web::error::ErrorInternalServerError("Database error")
+            })?;
+        
+        // Get all folders for the user to map folder names
+        let user_folders = folders::table
+            .filter(folders::user_id.eq(current_user_id))
+            .load::<Folder>(&mut conn)
+            .map_err(|e| {
+                log::error!("Database error: {}", e);
+                actix_web::error::ErrorInternalServerError("Database error")
+            })?;
+        
+        // Create folder lookup map
+        let folder_map: HashMap<Uuid, String> = user_folders
+            .into_iter()
+            .map(|f| (f.id, f.name))
+            .collect();
+        
+        // Convert passwords to CSV format
+        let mut csv_entries = Vec::new();
+        for password in user_passwords {
+            // Decrypt password
+            let decrypted_password = match crypto::decrypt_password(&password.encrypted_password) {
+                Ok(pwd) => pwd,
+                Err(e) => {
+                    log::error!("Failed to decrypt password: {}", e);
+                    continue; // Skip this entry if decryption fails
+                }
+            };
+            
+            let folder_name = password.folder_id
+                .and_then(|id| folder_map.get(&id))
+                .map(|name| name.clone())
+                .unwrap_or_else(|| "No Folder".to_string());
+            
+            csv_entries.push(CsvExportEntry {
+                name: password.website.clone(),
+                url: password.website,
+                username: password.username,
+                password: decrypted_password,
+                notes: password.notes.unwrap_or_default(),
+                folder: folder_name,
+            });
+        }
+        
+        // Generate CSV content
+        let mut csv_content = String::from("name,url,username,password,notes,folder\n");
+        for entry in csv_entries {
+            csv_content.push_str(&format!(
+                "\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\"\n",
+                entry.name.replace('"', "\"\""),
+                entry.url.replace('"', "\"\""),
+                entry.username.replace('"', "\"\""),
+                entry.password.replace('"', "\"\""),
+                entry.notes.replace('"', "\"\""),
+                entry.folder.replace('"', "\"\"")
+            ));
+        }
+        
+        log::info!("CSV export completed for user {}", current_user_id);
+        
+        Ok(HttpResponse::Ok()
+            .content_type("text/csv")
+            .append_header(("Content-Disposition", "attachment; filename=\"passq_export.csv\""))
+            .body(csv_content))
+    }
+    
+    // CSV Import handler
+    #[derive(Debug, Clone)]
+    enum CsvFormat {
+        PassQ,      // name,url,username,password,notes,folder
+        Bitwarden,  // folder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,login_password,login_totp
+        LastPass,   // url,username,password,extra,name,grouping,fav (or with totp)
+        OnePassword, // Title,Website,Username,Password,One-time password,Favorite status,Archived status,Tags,Notes
+    }
+
+    fn detect_csv_format(header_line: &str) -> CsvFormat {
+        let headers = parse_csv_line(header_line);
+        let headers_lower: Vec<String> = headers.iter().map(|h| h.to_lowercase()).collect();
+        
+        // Check for Bitwarden format
+        if headers_lower.contains(&"folder".to_string()) && 
+           headers_lower.contains(&"favorite".to_string()) && 
+           headers_lower.contains(&"login_uri".to_string()) && 
+           headers_lower.contains(&"login_username".to_string()) && 
+           headers_lower.contains(&"login_password".to_string()) {
+            return CsvFormat::Bitwarden;
+        }
+        
+        // Check for LastPass format
+        if headers_lower.contains(&"url".to_string()) && 
+           headers_lower.contains(&"username".to_string()) && 
+           headers_lower.contains(&"password".to_string()) && 
+           headers_lower.contains(&"grouping".to_string()) && 
+           headers_lower.contains(&"extra".to_string()) {
+            return CsvFormat::LastPass;
+        }
+        
+        // Check for 1Password format
+        if headers_lower.contains(&"title".to_string()) && 
+           headers_lower.contains(&"website".to_string()) && 
+           headers_lower.contains(&"username".to_string()) && 
+           headers_lower.contains(&"password".to_string()) && 
+           headers_lower.contains(&"one-time password".to_string()) {
+            return CsvFormat::OnePassword;
+        }
+        
+        // Default to PassQ format
+        CsvFormat::PassQ
+    }
+
+    pub async fn import_csv(
+        req: actix_web::HttpRequest,
+        import_data: web::Json<CsvImportRequest>,
+        db_pool: web::Data<db::DbPool>,
+    ) -> Result<HttpResponse, Error> {
+        use crate::schema::{passwords, folders};
+        
+        // Authenticate user
+        let current_user_id = match auth::extract_user_id_from_request(&req) {
+            Ok(user_id) => user_id,
+            Err(_) => {
+                return Ok(HttpResponse::Unauthorized().json(ApiResponse::<()>::error("Invalid or missing token".to_string())));
+            }
+        };
+        
+        let mut conn = db_pool.get().map_err(|e| {
+            log::error!("Failed to get database connection: {}", e);
+            actix_web::error::ErrorInternalServerError("Database connection error")
+        })?;
+        
+        // Parse CSV data
+        let lines: Vec<&str> = import_data.csv_data.lines().collect();
+        if lines.is_empty() {
+            return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Empty CSV data".to_string())));
+        }
+        
+        // Detect CSV format from header
+        let format = detect_csv_format(lines[0]);
+        log::info!("Detected CSV format: {:?}", format);
+        
+        let mut imported_count = 0;
+        let mut errors = Vec::new();
+        
+        // Get existing folders for the user
+        let user_folders = folders::table
+            .filter(folders::user_id.eq(current_user_id))
+            .load::<Folder>(&mut conn)
+            .map_err(|e| {
+                log::error!("Database error: {}", e);
+                actix_web::error::ErrorInternalServerError("Database error")
+            })?;
+        
+        let mut folder_map: HashMap<String, Uuid> = user_folders
+            .into_iter()
+            .map(|f| (f.name.clone(), f.id))
+            .collect();
+        
+        for (line_num, line) in lines.iter().skip(1).enumerate() {
+            if line.trim().is_empty() {
+                continue;
+            }
+            
+            let fields = parse_csv_line(line);
+            
+            // Extract data based on detected format
+            let (name, url, username, password, notes, folder_name) = match format {
+                CsvFormat::Bitwarden => {
+                    if fields.len() < 11 {
+                        errors.push(format!("Line {}: Invalid Bitwarden format", line_num + 2));
+                        continue;
+                    }
+                    let folder = fields.get(0).unwrap_or(&String::new()).clone();
+                    let name = fields.get(3).unwrap_or(&String::new()).clone();
+                    let notes = fields.get(4).unwrap_or(&String::new()).clone();
+                    let url = fields.get(7).unwrap_or(&String::new()).clone();
+                    let username = fields.get(8).unwrap_or(&String::new()).clone();
+                    let password = fields.get(9).unwrap_or(&String::new()).clone();
+                    (name, url, username, password, notes, if folder.is_empty() { "No Folder".to_string() } else { folder })
+                },
+                CsvFormat::LastPass => {
+                    if fields.len() < 7 {
+                        errors.push(format!("Line {}: Invalid LastPass format", line_num + 2));
+                        continue;
+                    }
+                    let url = fields.get(0).unwrap_or(&String::new()).clone();
+                    let username = fields.get(1).unwrap_or(&String::new()).clone();
+                    let password = fields.get(2).unwrap_or(&String::new()).clone();
+                    let notes = fields.get(3).unwrap_or(&String::new()).clone();
+                    let name = fields.get(4).unwrap_or(&String::new()).clone();
+                    let folder = fields.get(5).unwrap_or(&String::new()).clone();
+                    (name, url, username, password, notes, if folder.is_empty() { "No Folder".to_string() } else { folder })
+                },
+                CsvFormat::OnePassword => {
+                    if fields.len() < 9 {
+                        errors.push(format!("Line {}: Invalid 1Password format", line_num + 2));
+                        continue;
+                    }
+                    let name = fields.get(0).unwrap_or(&String::new()).clone();
+                    let url = fields.get(1).unwrap_or(&String::new()).clone();
+                    let username = fields.get(2).unwrap_or(&String::new()).clone();
+                    let password = fields.get(3).unwrap_or(&String::new()).clone();
+                    let notes = fields.get(8).unwrap_or(&String::new()).clone();
+                    let tags = fields.get(7).unwrap_or(&String::new()).clone();
+                    let folder = if tags.is_empty() { "No Folder".to_string() } else { tags.split(',').next().unwrap_or("No Folder").to_string() };
+                    (name, url, username, password, notes, folder)
+                },
+                CsvFormat::PassQ => {
+                    if fields.len() < 4 {
+                        errors.push(format!("Line {}: Invalid PassQ format (need at least name,url,username,password)", line_num + 2));
+                        continue;
+                    }
+                    let name = fields.get(0).unwrap_or(&String::new()).clone();
+                    let url = fields.get(1).unwrap_or(&String::new()).clone();
+                    let username = fields.get(2).unwrap_or(&String::new()).clone();
+                    let password = fields.get(3).unwrap_or(&String::new()).clone();
+                    let notes = fields.get(4).unwrap_or(&String::new()).clone();
+                    let folder_name = fields.get(5).unwrap_or(&String::from("No Folder")).clone();
+                    (name, url, username, password, notes, folder_name)
+                }
+            };
+            
+            // Skip entries without essential data
+            if name.is_empty() && url.is_empty() {
+                errors.push(format!("Line {}: Missing both name and URL", line_num + 2));
+                continue;
+            }
+            
+            if username.is_empty() && password.is_empty() {
+                errors.push(format!("Line {}: Missing both username and password", line_num + 2));
+                continue;
+            }
+            
+            // Use name as website if URL is empty, or URL as name if name is empty
+             let final_name = if name.is_empty() { url.clone() } else { name.clone() };
+             let final_url = if url.is_empty() { final_name.clone() } else { url.clone() };
+            
+            // Get or create folder
+            let folder_id = if folder_name == "No Folder" || folder_name.is_empty() {
+                None
+            } else {
+                match folder_map.get(&folder_name) {
+                    Some(id) => Some(*id),
+                    None => {
+                        // Create new folder
+                        let new_folder = NewFolder {
+                            id: Uuid::new_v4(),
+                            user_id: current_user_id,
+                            parent_folder_id: None,
+                            name: folder_name.clone(),
+                        };
+                        
+                        match diesel::insert_into(folders::table)
+                            .values(&new_folder)
+                            .execute(&mut conn) {
+                            Ok(_) => {
+                                folder_map.insert(folder_name, new_folder.id);
+                                Some(new_folder.id)
+                            }
+                            Err(e) => {
+                                log::error!("Failed to create folder: {}", e);
+                                errors.push(format!("Line {}: Failed to create folder", line_num + 2));
+                                continue;
+                            }
+                        }
+                    }
+                }
+            };
+            
+            // Encrypt password
+            let encrypted_password = match crypto::encrypt_password(&password) {
+                Ok(encrypted) => encrypted,
+                Err(e) => {
+                    log::error!("Failed to encrypt password: {}", e);
+                    errors.push(format!("Line {}: Failed to encrypt password", line_num + 2));
+                    continue;
+                }
+            };
+            
+            // Create new password entry
+            let new_password = NewPassword {
+                id: Uuid::new_v4(),
+                user_id: current_user_id,
+                folder_id,
+                website: final_url,
+                username,
+                encrypted_password,
+                notes: if notes.is_empty() { None } else { Some(notes) },
+                otp_secret: None,
+                attachments: None,
+            };
+            
+            match diesel::insert_into(passwords::table)
+                .values(&new_password)
+                .execute(&mut conn) {
+                Ok(_) => imported_count += 1,
+                Err(e) => {
+                    log::error!("Failed to insert password: {}", e);
+                    errors.push(format!("Line {}: Failed to save password", line_num + 2));
+                }
+            }
+        }
+        
+        log::info!("CSV import completed for user {}: {} imported, {} errors", current_user_id, imported_count, errors.len());
+        
+        let message = if errors.is_empty() {
+            format!("Successfully imported {} passwords", imported_count)
+        } else {
+            format!("Imported {} passwords with {} errors: {}", imported_count, errors.len(), errors.join("; "))
+        };
+        
+        Ok(HttpResponse::Ok().json(ApiResponse::success(message, Some(imported_count))))
+    }
+    
+    // Helper function to parse CSV line with quoted fields
+    fn parse_csv_line(line: &str) -> Vec<String> {
+        let mut fields = Vec::new();
+        let mut current_field = String::new();
+        let mut in_quotes = false;
+        let mut chars = line.chars().peekable();
+        
+        while let Some(ch) = chars.next() {
+            match ch {
+                '"' => {
+                    if in_quotes && chars.peek() == Some(&'"') {
+                        // Escaped quote
+                        current_field.push('"');
+                        chars.next(); // Skip the second quote
+                    } else {
+                        in_quotes = !in_quotes;
+                    }
+                }
+                ',' if !in_quotes => {
+                    fields.push(current_field.trim().to_string());
+                    current_field.clear();
+                }
+                _ => {
+                    current_field.push(ch);
+                }
+            }
+        }
+        
+        fields.push(current_field.trim().to_string());
+        fields
+    }
 }
 
 #[actix_web::main]
@@ -1187,6 +1576,15 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::resource("/shares/{id}")
                     .route(web::delete().to(handlers::remove_share))
+            )
+            // CSV endpoints
+            .service(
+                web::resource("/export/csv")
+                    .route(web::get().to(handlers::export_csv))
+            )
+            .service(
+                web::resource("/import/csv")
+                    .route(web::post().to(handlers::import_csv))
             )
     })
     .bind(("0.0.0.0", port))?

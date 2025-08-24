@@ -64,4 +64,15 @@ export const folderAPI = {
   share: (id, shareData) => api.post(`/folders/${id}/share`, shareData),
 };
 
+// CSV API
+export const csvAPI = {
+  export: () => api.get('/export/csv', {
+    responseType: 'blob',
+    headers: {
+      'Accept': 'text/csv',
+    },
+  }),
+  import: (csvData) => api.post('/import/csv', { csv_data: csvData }),
+};
+
 export default api;

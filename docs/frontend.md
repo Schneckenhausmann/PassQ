@@ -38,6 +38,7 @@ Main dashboard component displaying password management interface.
 - Integration with multiple child components (PasswordItem, FolderTree, ShareModal, SearchBar, AddEntryModal, EditEntryModal)
 - State management for sharing functionality and search operations
 - Complete CRUD operations for passwords and folders
+- CSV import/export functionality with download and file upload capabilities
 - Basic component structure with conditional rendering
 
 ### PasswordItem.js
@@ -47,6 +48,52 @@ Component for displaying individual password entries with favicon.
 ### FolderTree.js
 Component for displaying and managing folder structure with subfolders.
 - Mock implementation for demonstration purposes
+
+## CSV Import/Export Functionality
+
+The application includes comprehensive CSV import/export capabilities for password data migration and backup.
+
+### Export Features
+- **One-click export**: Export all passwords and folders to CSV format
+- **Standard format**: Compatible with common password managers (Bitwarden, LastPass, etc.)
+- **Automatic download**: CSV file automatically downloads with timestamp
+- **Secure handling**: Export requires authentication and includes only user's own data
+
+### Import Features
+- **File upload interface**: Drag-and-drop or click to select CSV files
+- **Multi-format support**: Automatically detects and supports CSV exports from multiple password managers
+- **Format validation**: Validates CSV structure before processing
+- **Automatic folder creation**: Creates folders during import if they don't exist
+- **Bulk import**: Processes multiple password entries in a single operation
+- **Error handling**: Provides clear feedback for malformed data or import failures
+
+### Supported CSV Formats
+The import functionality automatically detects and supports the following formats:
+
+#### PassQ Format (Default Export)
+- `name`: Website or service name
+- `url`: Website URL
+- `username`: Login username or email
+- `password`: Password
+- `notes`: Additional notes or comments
+- `folder`: Folder name for organization
+
+#### Bitwarden Format
+- `folder`, `favorite`, `type`, `name`, `notes`, `fields`, `reprompt`, `login_uri`, `login_username`, `login_password`, `login_totp`
+
+#### LastPass Format
+- `url`, `username`, `password`, `extra`, `name`, `grouping`, `fav`
+
+#### 1Password Format
+- `Title`, `Website`, `Username`, `Password`, `One-time password`, `Favorite status`, `Archived status`, `Tags`, `Notes`
+
+**Note**: Format detection is automatic based on column headers. No manual format selection is required.
+
+### Security Considerations
+- All CSV operations require valid JWT authentication
+- Exported data maintains encryption for sensitive fields
+- Import validation prevents malicious data injection
+- File processing happens client-side before server transmission
 
 ### ShareModal.js
 Modal component for sharing folders or entries with other users.

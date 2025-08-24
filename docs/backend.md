@@ -198,8 +198,65 @@ GET /shared/passwords
 Authorization: Bearer <jwt_token>
 
 DELETE /shares/{id}
-Authorization: Bearer <jwt_token>
 ```
+
+#### CSV Import/Export
+```
+GET /export/csv
+Authorization: Bearer <jwt_token>
+Response: text/csv
+
+POST /import/csv
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "csv_data": "<CSV content with headers>"
+}
+
+Response:
+{
+  "success": true,
+  "message": "CSV imported successfully",
+  "data": 5  // number of imported entries
+}
+```
+
+### Supported CSV Formats
+
+The CSV import functionality automatically detects and supports multiple password manager formats:
+
+#### PassQ Format (Default)
+```
+name,url,username,password,notes,folder
+Example Site,https://example.com,user@example.com,password123,My notes,Work
+```
+
+#### Bitwarden Format
+```
+folder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,login_password,login_totp
+Work,0,1,Example Site,My notes,,0,https://example.com,user@example.com,password123,
+```
+
+#### LastPass Format
+```
+url,username,password,extra,name,grouping,fav
+https://example.com,user@example.com,password123,My notes,Example Site,Work,0
+```
+
+#### 1Password Format
+```
+Title,Website,Username,Password,One-time password,Favorite status,Archived status,Tags,Notes
+Example Site,https://example.com,user@example.com,password123,,false,false,Work,My notes
+```
+
+**Format Detection**: The system automatically detects the format based on column headers. No manual format specification is required.
+
+**Import Behavior**:
+- Missing folders are automatically created
+- Empty or missing essential fields are handled gracefully
+- Duplicate entries are imported as separate records
+- Import errors are reported with specific line numbers
 
 ## Data Models
 
