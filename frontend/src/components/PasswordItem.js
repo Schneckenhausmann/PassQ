@@ -41,7 +41,7 @@ function PasswordItem({ id, website, username, password, notes, otp_secret, atta
     try {
       const response = await passwordAPI.generateOTP(id);
       if (response.data.success) {
-        setOtpCode(response.data.data.otp_code);
+        setOtpCode(response.data.otp_code);
         setTimeout(() => setOtpCode(null), 30000);
       }
     } catch (error) {

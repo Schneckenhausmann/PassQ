@@ -1,17 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Icons } from './Icons';
-
-// Utility function to sanitize search input and prevent XSS
-const sanitizeSearchInput = (input) => {
-  if (typeof input !== 'string') return '';
-  
-  // Remove potentially dangerous characters and limit length
-  return input
-    .replace(/[<>"'&]/g, '') // Remove HTML/script injection characters
-    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
-    .trim()
-    .slice(0, 100); // Limit to 100 characters for performance
-};
+import { sanitizeSearchQuery } from '../utils/sanitization';
 
 // Debounce hook for performance optimization
 const useDebounce = (callback, delay) => {
@@ -43,7 +32,7 @@ function SearchBar({ passwords, onFilteredResults, placeholder = "Search passwor
         return passwords;
       }
       
-      const sanitizedTerm = sanitizeSearchInput(term).toLowerCase();
+      const sanitizedTerm = sanitizeSearchQuery(term).toLowerCase();
       
       if (sanitizedTerm.length === 0) {
         return passwords;
@@ -70,7 +59,7 @@ function SearchBar({ passwords, onFilteredResults, placeholder = "Search passwor
   
   const handleInputChange = (e) => {
     const value = e.target.value;
-    const sanitizedValue = sanitizeSearchInput(value);
+    const sanitizedValue = sanitizeSearchQuery(value);
     
     setSearchTerm(sanitizedValue);
     debouncedSearch(sanitizedValue);

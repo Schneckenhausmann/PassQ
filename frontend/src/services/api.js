@@ -1,97 +1,100 @@
-import axios from 'axios';
+import { makeAuthenticatedRequest } from '../utils/csrf';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
-// Create axios instance with default config
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// Helper function to make API requests with CSRF protection
+const makeRequest = async (endpoint, options = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  const response = await makeAuthenticatedRequest(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // Handle auth errors
+  if (response.status === 401) {
+    window.location.href = '/';
+    throw new Error('Unauthorized');
   }
-  return config;
-});
 
-// Handle auth errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('username');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Request failed' }));
+    throw new Error(errorData.message || 'Request failed');
   }
-);
+
+  return response.json();
+};
 
 // Auth API
 export const authAPI = {
-  register: (userData) => api.post('/register', userData),
-  login: (credentials) => api.post('/login', credentials),
-  changePassword: (passwordData) => api.put('/change-password', passwordData),
+  register: (userData) => makeRequest('/register', { method: 'POST', body: JSON.stringify(userData) }),
+  login: (credentials) => makeRequest('/login', { method: 'POST', body: JSON.stringify(credentials) }),
+  changePassword: (passwordData) => makeRequest('/auth/change-password', { method: 'PUT', body: JSON.stringify(passwordData) }),
+  requestPasswordReset: (email) => makeRequest('/auth/password-reset/request', { method: 'POST', body: JSON.stringify({ email }) }),
+  confirmPasswordReset: (token, newPassword) => makeRequest('/auth/password-reset/confirm', { method: 'POST', body: JSON.stringify({ token, new_password: newPassword }) }),
 };
 
 // Password API
 export const passwordAPI = {
-  getAll: () => api.get('/passwords'),
-  create: (passwordData) => api.post('/passwords', passwordData),
-  update: (id, passwordData) => api.put(`/passwords/${id}`, passwordData),
-  move: (id, moveData) => api.put(`/passwords/${id}/move`, moveData),
-  delete: (id) => api.delete(`/passwords/${id}`),
-  generateOTP: (id) => api.get(`/passwords/${id}/otp`),
-  share: (id, shareData) => api.post(`/passwords/${id}/share`, shareData),
-  getSharedPasswords: () => api.get('/shared/passwords'),
+  getAll: () => makeRequest('/passwords', { method: 'GET' }),
+  create: (passwordData) => makeRequest('/passwords', { method: 'POST', body: JSON.stringify(passwordData) }),
+  update: (id, passwordData) => makeRequest(`/passwords/${id}`, { method: 'PUT', body: JSON.stringify(passwordData) }),
+  move: (id, moveData) => makeRequest(`/passwords/${id}/move`, { method: 'PUT', body: JSON.stringify(moveData) }),
+  delete: (id) => makeRequest(`/passwords/${id}`, { method: 'DELETE' }),
+  generateOTP: (id) => makeRequest(`/passwords/${id}/otp`, { method: 'GET' }),
+  share: (id, shareData) => makeRequest(`/passwords/${id}/share`, { method: 'POST', body: JSON.stringify(shareData) }),
+  getSharedPasswords: () => makeRequest('/shared/passwords', { method: 'GET' }),
 };
 
 // Share API
 export const shareAPI = {
-  getSharedItems: () => api.get('/shared'),
-  removeShare: (shareId) => api.delete(`/shares/${shareId}`),
+  getSharedItems: () => makeRequest('/shared', { method: 'GET' }),
+  removeShare: (shareId) => makeRequest(`/shares/${shareId}`, { method: 'DELETE' }),
 };
 
 // Folder API
 export const folderAPI = {
-  getAll: () => api.get('/folders'),
-  create: (folderData) => api.post('/folders', folderData),
-  update: (id, folderData) => api.put(`/folders/${id}`, folderData),
-  delete: (id) => api.delete(`/folders/${id}`),
-  share: (id, shareData) => api.post(`/folders/${id}/share`, shareData),
+  getAll: () => makeRequest('/folders', { method: 'GET' }),
+  create: (folderData) => makeRequest('/folders', { method: 'POST', body: JSON.stringify(folderData) }),
+  update: (id, folderData) => makeRequest(`/folders/${id}`, { method: 'PUT', body: JSON.stringify(folderData) }),
+  delete: (id) => makeRequest(`/folders/${id}`, { method: 'DELETE' }),
+  share: (id, shareData) => makeRequest(`/folders/${id}/share`, { method: 'POST', body: JSON.stringify(shareData) }),
 };
 
 // CSV API
 export const csvAPI = {
   export: async (password) => {
     try {
-      const response = await api.post('/export/csv', { password }, {
-        responseType: 'blob',
+      const url = `${API_BASE_URL}/export/csv`;
+      const response = await makeAuthenticatedRequest(url, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Accept': 'text/csv',
         },
+        body: JSON.stringify({ password }),
       });
-      return response;
-    } catch (error) {
-      // Handle error responses that come as blobs
-      if (error.response && error.response.data instanceof Blob) {
-        const text = await error.response.data.text();
-        try {
-          const errorData = JSON.parse(text);
+      
+      if (!response.ok) {
+        // Handle error responses that come as blobs
+        if (response.headers.get('content-type')?.includes('application/json')) {
+          const errorData = await response.json();
           throw new Error(errorData.message || 'Export failed');
-        } catch {
+        } else {
           throw new Error('Export failed');
         }
       }
+      
+      return response;
+    } catch (error) {
       throw error;
     }
   },
-  import: (csvData) => api.post('/import/csv', { csv_data: csvData }),
+  import: (csvData) => makeRequest('/import/csv', { method: 'POST', body: JSON.stringify({ csv_data: csvData }) }),
 };
 
-export default api;
+// Export makeRequest for direct use if needed
+export { makeRequest };

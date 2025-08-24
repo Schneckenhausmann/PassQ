@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { authAPI } from '../services/api';
 
 function Login({ onSwitch, onLoginSuccess }) {
   const [username, setUsername] = useState('');
@@ -11,7 +11,7 @@ function Login({ onSwitch, onLoginSuccess }) {
     e.preventDefault();
     
     if (!username || !password) {
-      setError('Username and password are required');
+      setError('Username/email and password are required');
       return;
     }
 
@@ -19,23 +19,23 @@ function Login({ onSwitch, onLoginSuccess }) {
     setError('');
 
     try {
-      const response = await axios.post('/login', {
+      const data = await authAPI.login({
         username,
         password
       });
       
-      if (response.data.success) {
-        console.log('Login successful:', response.data);
+      if (data.success) {
+        console.log('Login successful:', data);
         // Call the success callback to update parent state
         if (onLoginSuccess) {
-          onLoginSuccess(response.data.data, username);
+          onLoginSuccess(username); // No token needed, it's in HttpOnly cookie
         }
       } else {
-        setError(response.data.message || 'Login failed');
+        setError(data.message || 'Login failed');
       }
     } catch (error) {
       console.error('Login failed:', error);
-      setError(error.response?.data?.message || 'Login failed. Please try again.');
+      setError(error.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -47,11 +47,11 @@ function Login({ onSwitch, onLoginSuccess }) {
       {error && <div className="cartoon-border bg-red-100 text-red-800 p-3 rounded text-sm font-medium">{error}</div>}
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="username" className="block text-sm font-bold uppercase tracking-wide">Username</label>
+          <label htmlFor="username" className="block text-sm font-bold uppercase tracking-wide">Username or Email</label>
           <input
             id="username"
             type="text"
-            placeholder="Enter your username"
+            placeholder="Enter your username or email"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -76,11 +76,18 @@ function Login({ onSwitch, onLoginSuccess }) {
           {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
-      <div className="text-center text-sm">
-        <span className="text-gray-600">Don't have an account? </span>
-        <button type="button" onClick={onSwitch} className="font-bold text-black hover:underline uppercase tracking-wide">
-          Register
-        </button>
+      <div className="text-center text-sm space-y-2">
+        <div>
+          <span className="text-gray-600">Don't have an account? </span>
+          <button type="button" onClick={onSwitch} className="font-bold text-black hover:underline uppercase tracking-wide">
+            Register
+          </button>
+        </div>
+        <div>
+          <button type="button" onClick={() => window.location.href = '/forgot-password'} className="font-bold text-black hover:underline uppercase tracking-wide text-xs">
+            Forgot Password?
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -6,6 +6,8 @@ class PassQPopup {
     this.currentTab = null;
     this.credentials = [];
     this.filteredCredentials = [];
+    this.crypto = new PassQCrypto();
+    this.domSanitizer = new PassQDOMSanitizer();
     
     this.init();
   }
@@ -112,30 +114,41 @@ class PassQPopup {
       img.style.borderRadius = '4px';
       img.onerror = () => {
          console.log('Favicon failed, trying globe placeholder');
-          siteFavicon.innerHTML = '';
-          const globeImg = document.createElement('img');
-          globeImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iNyIgZmlsbD0id2hpdGUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTEgOGgxNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDFjLTIuNSAzLTIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNOCAxYzIuNSAzIDIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNMyA0LjVjMyAwIDcgMCAxMCAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS4yIiBmaWxsPSJub25lIi8+CiAgPHBhdGggZD0iTTMgMTEuNWMzIDAgNyAwIDEwIDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+';
+          // Security: Safe DOM clearing
+          while (siteFavicon.firstChild) {
+            siteFavicon.removeChild(siteFavicon.firstChild);
+          }
+          const globeImg = this.domSanitizer.createSafeElement('img', {
+            'src': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iNyIgZmlsbD0id2hpdGUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTEgOGgxNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDFjLTIuNSAzLTIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNOCAxYzIuNSAzIDIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNMyA0LjVjMyAwIDcgMCAxMCAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS4yIiBmaWxsPSJub25lIi8+CiAgPHBhdGggZD0iTTMgMTEuNWMzIDAgNyAwIDEwIDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+',
+            'alt': 'Globe'
+          });
           globeImg.style.width = '100%';
           globeImg.style.height = '100%';
-          globeImg.alt = 'Globe';
           globeImg.onerror = () => {
             console.log('Globe placeholder failed, using emoji');
-            siteFavicon.innerHTML = '🌐';
+            // Security: Safe DOM clearing and text content setting
+            while (siteFavicon.firstChild) {
+              siteFavicon.removeChild(siteFavicon.firstChild);
+            }
+            this.domSanitizer.safeSetTextContent(siteFavicon, '🌐');
             siteFavicon.style.fontSize = '16px';
             siteFavicon.style.textAlign = 'center';
             siteFavicon.style.lineHeight = '24px';
           };
           siteFavicon.appendChild(globeImg);
        };
-      siteFavicon.innerHTML = '';
+      // Security: Safe DOM clearing
+      while (siteFavicon.firstChild) {
+        siteFavicon.removeChild(siteFavicon.firstChild);
+      }
       siteFavicon.appendChild(img);
     }
   }
 
   async checkLoginStatus() {
     try {
-      const result = await browser.storage.local.get(['authToken']);
-      if (result.authToken) {
+      const token = await this.crypto.retrieveToken();
+      if (token) {
         await this.showMainContent();
       } else {
         this.showLoginForm();
@@ -191,15 +204,15 @@ class PassQPopup {
 
   async loadCredentials() {
     try {
-      const result = await browser.storage.local.get(['authToken']);
-      if (!result.authToken) {
+      const token = await this.crypto.retrieveToken();
+      if (!token) {
         this.showLoginForm();
         return;
       }
 
       const response = await fetch(`${this.apiUrl}/passwords`, {
         headers: {
-          'Authorization': `Bearer ${result.authToken}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -224,7 +237,10 @@ class PassQPopup {
     
     // Clear existing items but keep the template
     const template = document.getElementById('credentialTemplate');
-    credentialsList.innerHTML = '';
+    // Security: Safe DOM clearing
+    while (credentialsList.firstChild) {
+      credentialsList.removeChild(credentialsList.firstChild);
+    }
     if (template) {
       credentialsList.appendChild(template);
     }
@@ -261,22 +277,33 @@ class PassQPopup {
       img.style.borderRadius = '4px';
       img.onerror = () => {
           console.log('Credential favicon failed, trying globe placeholder');
-           favicon.innerHTML = '';
-           const globeImg = document.createElement('img');
-           globeImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iNyIgZmlsbD0id2hpdGUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTEgOGgxNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDFjLTIuNSAzLTIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNOCAxYzIuNSAzIDIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNMyA0LjVjMyAwIDcgMCAxMCAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS4yIiBmaWxsPSJub25lIi8+CiAgPHBhdGggZD0iTTMgMTEuNWMzIDAgNyAwIDEwIDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+';
+           // Security: Safe DOM clearing
+           while (favicon.firstChild) {
+             favicon.removeChild(favicon.firstChild);
+           }
+           const globeImg = this.domSanitizer.createSafeElement('img', {
+             'src': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iNyIgZmlsbD0id2hpdGUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTEgOGgxNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDFjLTIuNSAzLTIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNOCAxYzIuNSAzIDIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNMyA0LjVjMyAwIDcgMCAxMCAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS4yIiBmaWxsPSJub25lIi8+CiAgPHBhdGggZD0iTTMgMTEuNWMzIDAgNyAwIDEwIDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+',
+             'alt': 'Globe'
+           });
            globeImg.style.width = '100%';
            globeImg.style.height = '100%';
-           globeImg.alt = 'Globe';
            globeImg.onerror = () => {
              console.log('Globe placeholder failed, using emoji');
-             favicon.innerHTML = '🌐';
+             // Security: Safe DOM clearing and text content setting
+             while (favicon.firstChild) {
+               favicon.removeChild(favicon.firstChild);
+             }
+             this.domSanitizer.safeSetTextContent(favicon, '🌐');
              favicon.style.fontSize = '12px';
              favicon.style.textAlign = 'center';
              favicon.style.lineHeight = '24px';
            };
            favicon.appendChild(globeImg);
         };
-      favicon.innerHTML = '';
+      // Security: Safe DOM clearing
+      while (favicon.firstChild) {
+        favicon.removeChild(favicon.firstChild);
+      }
       favicon.appendChild(img);
     }
     
@@ -433,8 +460,8 @@ class PassQPopup {
     }
     
     try {
-      const result = await browser.storage.local.get(['authToken']);
-      if (!result.authToken) {
+      const token = await this.crypto.retrieveToken();
+      if (!token) {
         this.showToast('Not authenticated', 'error');
         return;
       }
@@ -442,7 +469,7 @@ class PassQPopup {
       const response = await fetch(`${this.apiUrl}/passwords/${this.currentEditingCredentialId}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${result.authToken}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -472,8 +499,8 @@ class PassQPopup {
     }
     
     try {
-      const result = await browser.storage.local.get(['authToken']);
-      if (!result.authToken) {
+      const token = await this.crypto.retrieveToken();
+      if (!token) {
         this.showToast('Not authenticated', 'error');
         return;
       }
@@ -481,7 +508,7 @@ class PassQPopup {
       const response = await fetch(`${this.apiUrl}/passwords/${this.currentEditingCredentialId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${result.authToken}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -505,21 +532,22 @@ class PassQPopup {
     
     if (passwordInput.type === 'password') {
       passwordInput.type = 'text';
-      toggleBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C7 20 2.73 16.39 1 12A18.45 18.45 0 0 1 5.06 5.06L17.94 17.94Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M1 1L23 23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M10.59 10.59A2 2 0 0 0 13.41 13.41" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `;
+      // Security: Safe DOM manipulation for toggle button
+      while (toggleBtn.firstChild) {
+        toggleBtn.removeChild(toggleBtn.firstChild);
+      }
+      const eyeOffIcon = this.domSanitizer.createSafeElement('span');
+      this.domSanitizer.safeSetTextContent(eyeOffIcon, '🙈');
+      toggleBtn.appendChild(eyeOffIcon);
     } else {
       passwordInput.type = 'password';
-      toggleBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-        </svg>
-      `;
+      // Security: Safe DOM manipulation for toggle button
+      while (toggleBtn.firstChild) {
+        toggleBtn.removeChild(toggleBtn.firstChild);
+      }
+      const eyeIcon = this.domSanitizer.createSafeElement('span');
+      this.domSanitizer.safeSetTextContent(eyeIcon, '👁️');
+      toggleBtn.appendChild(eyeIcon);
     }
   }
 
@@ -689,7 +717,7 @@ class PassQPopup {
       
       if (response.ok) {
         const data = await response.json();
-        await browser.storage.local.set({ authToken: data.data }); // Backend returns token in 'data' field
+        await this.crypto.storeToken(data.data); // Backend returns token in 'data' field
         await this.showMainContent();
       } else {
         const error = await response.json();
@@ -719,7 +747,8 @@ class PassQPopup {
 
   async handleLogout() {
     try {
-      await browser.storage.local.remove(['authToken']);
+      await this.crypto.removeToken();
+      await this.crypto.clearCryptoData();
       this.showLoginForm();
     } catch (error) {
       console.error('Logout error:', error);

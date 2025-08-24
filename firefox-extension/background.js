@@ -4,6 +4,7 @@ class PassQBackground {
   constructor() {
     this.apiUrl = null;
     this.authToken = null;
+    this.crypto = new PassQCrypto();
     this.init();
   }
 
@@ -14,9 +15,9 @@ class PassQBackground {
 
   async loadConfig() {
     try {
-      const result = await browser.storage.local.get(['passqServerUrl', 'authToken']);
+      const result = await browser.storage.local.get(['passqServerUrl']);
       this.apiUrl = result.passqServerUrl;
-      this.authToken = result.authToken;
+      this.authToken = await this.crypto.retrieveToken();
     } catch (error) {
       console.error('Error loading config:', error);
     }
@@ -29,13 +30,13 @@ class PassQBackground {
     });
 
     // Listen for storage changes to update config
-    browser.storage.onChanged.addListener((changes, namespace) => {
+    browser.storage.onChanged.addListener(async (changes, namespace) => {
       if (namespace === 'local') {
         if (changes.passqServerUrl) {
           this.apiUrl = changes.passqServerUrl.newValue;
         }
-        if (changes.authToken) {
-          this.authToken = changes.authToken.newValue;
+        if (changes.encryptedAuthToken) {
+          this.authToken = await this.crypto.retrieveToken();
         }
       }
     });
@@ -102,7 +103,7 @@ class PassQBackground {
       if (response.ok) {
         const data = await response.json();
         this.authToken = data.data; // Backend returns token in 'data' field
-        await browser.storage.local.set({ authToken: data.data });
+        await this.crypto.storeToken(data.data);
         sendResponse({ success: true, token: data.data });
       } else {
         const error = await response.json();
@@ -117,7 +118,8 @@ class PassQBackground {
   async handleLogout(sendResponse) {
     try {
       this.authToken = null;
-      await browser.storage.local.remove(['authToken']);
+      await this.crypto.removeToken();
+      await this.crypto.clearCryptoData();
       sendResponse({ success: true });
     } catch (error) {
       sendResponse({ success: false, error: error.message });
@@ -144,7 +146,7 @@ class PassQBackground {
       } else if (response.status === 401) {
         // Token expired, clear it
         this.authToken = null;
-        await browser.storage.local.remove(['authToken']);
+        await this.crypto.removeToken();
         sendResponse({ success: false, error: 'Authentication expired' });
       } else {
         sendResponse({ success: false, error: 'Failed to fetch passwords' });

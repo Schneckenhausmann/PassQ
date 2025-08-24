@@ -1,3 +1,6 @@
+# PassQ Password Manager Docker Compose Configuration
+# This file contains both development and production-ready configurations
+
 services:
   db:
     image: postgres:15-alpine
@@ -20,12 +23,63 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: postgres://passq:${POSTGRES_PASSWORD}@db:5432/passq
+      # DATABASE CONFIGURATION
+      # Development: Uses sslmode=disable for local Docker networking
+      # Production: Change to sslmode=require for enforced TLS
+      DATABASE_URL: postgres://passq:${POSTGRES_PASSWORD}@db:5432/passq?sslmode=disable
+      
+      # SECURITY KEYS (REQUIRED)
+      # Generate strong random keys for production deployment
       JWT_SECRET: ${JWT_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      AUDIT_SECRET: ${AUDIT_SECRET}
+      
+      # SMTP CONFIGURATION
+      # DEVELOPMENT: Uses MailHog for local email testing
+      # PRODUCTION: Replace with your real SMTP provider settings
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_USERNAME: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM_EMAIL: noreply@passq.local
+      SMTP_FROM_NAME: PassQ Password Manager
+      
+      # PRODUCTION SMTP EXAMPLES:
+      # For Gmail with App Password:
+      # SMTP_HOST: smtp.gmail.com
+      # SMTP_PORT: 587
+      # SMTP_USERNAME: your-email@gmail.com
+      # SMTP_PASSWORD: your-app-password
+      # SMTP_FROM_EMAIL: your-email@gmail.com
+      # SMTP_FROM_NAME: Your Company Name
+      #
+      # For AWS SES:
+      # SMTP_HOST: email-smtp.us-east-1.amazonaws.com
+      # SMTP_PORT: 587
+      # SMTP_USERNAME: your-ses-smtp-username
+      # SMTP_PASSWORD: your-ses-smtp-password
+      # SMTP_FROM_EMAIL: noreply@yourdomain.com
+      # SMTP_FROM_NAME: Your Company Name
+      #
+      # For SendGrid:
+      # SMTP_HOST: smtp.sendgrid.net
+      # SMTP_PORT: 587
+      # SMTP_USERNAME: apikey
+      # SMTP_PASSWORD: your-sendgrid-api-key
+      # SMTP_FROM_EMAIL: noreply@yourdomain.com
+      # SMTP_FROM_NAME: Your Company Name
+      #
+      # IMPORTANT PRODUCTION NOTES:
+      # - Always use port 587 (STARTTLS) or 465 (SSL/TLS) for production
+      # - Never use port 25 or unencrypted connections
+      # - The backend automatically enforces TLS for ports 587 and 465
+      # - Verify your SMTP provider supports TLS encryption
+      # - Use environment variables or secrets management for credentials
     depends_on:
       db:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     restart: unless-stopped
   
   frontend:
@@ -35,6 +89,17 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+  # DEVELOPMENT EMAIL SERVICE
+  # MailHog provides a local SMTP server for testing emails
+  # PRODUCTION: Remove this service and configure real SMTP above
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP port for backend connection
+      - "8025:8025"  # Web UI port for viewing emails
+    restart: unless-stopped
+    # PRODUCTION: Comment out or remove this entire service
 
 volumes:
   pgdata:

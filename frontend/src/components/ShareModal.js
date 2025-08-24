@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Icons } from './Icons';
 import { passwordAPI, folderAPI } from '../services/api';
+import { sanitizeUsername } from '../utils/sanitization';
 
 function ShareModal({ isOpen, onClose, itemType, itemId, onSuccess }) {
   const [recipient, setRecipient] = useState('');
@@ -79,7 +80,7 @@ function ShareModal({ isOpen, onClose, itemType, itemId, onSuccess }) {
               type="text"
               placeholder="Enter username or email address"
               value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
+              onChange={(e) => setRecipient(sanitizeUsername(e.target.value))}
               className="w-full px-3 py-2 border border-black border-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />

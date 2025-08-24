@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { sanitizeUsername } from '../utils/sanitization';
 
 function Registration({ onSwitch, onRegistrationSuccess }) {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -12,8 +14,15 @@ function Registration({ onSwitch, onRegistrationSuccess }) {
     e.preventDefault();
     
     // Validation
-    if (!username || !password) {
-      setError('Username and password are required');
+    if (!username || !email || !password) {
+      setError('Username, email, and password are required');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
       return;
     }
 
@@ -32,6 +41,7 @@ function Registration({ onSwitch, onRegistrationSuccess }) {
       
       const response = await axios.post('/register', {
         username,
+        email,
         password
       });
 
@@ -74,7 +84,21 @@ function Registration({ onSwitch, onRegistrationSuccess }) {
             type="text"
             placeholder="Choose a username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => setUsername(sanitizeUsername(e.target.value))}
+            disabled={success}
+            required
+            className="w-full cartoon-border cartoon-shadow px-3 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <label htmlFor="reg-email" className="block text-sm font-bold uppercase tracking-wide">Email</label>
+          <input
+            id="reg-email"
+            type="email"
+            placeholder="Enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             disabled={success}
             required
             className="w-full cartoon-border cartoon-shadow px-3 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"

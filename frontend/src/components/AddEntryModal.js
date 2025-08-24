@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from './Icons';
+import { sanitizeInput, sanitizeURL, sanitizeName, sanitizeNotes } from '../utils/sanitization';
 
 function AddEntryModal({ isOpen, onClose, onAdd, selectedFolder, folders, onAddFolder }) {
   const [formData, setFormData] = useState({
@@ -46,9 +47,10 @@ function AddEntryModal({ isOpen, onClose, onAdd, selectedFolder, folders, onAddF
 
   const handleChange = (e) => {
     let value = e.target.value;
+    const fieldName = e.target.name;
     
     // If it's the otp_secret field and contains otpauth://, extract the secret
-    if (e.target.name === 'otp_secret' && value.startsWith('otpauth://')) {
+    if (fieldName === 'otp_secret' && value.startsWith('otpauth://')) {
       try {
         const url = new URL(value);
         const secret = url.searchParams.get('secret');
@@ -58,6 +60,28 @@ function AddEntryModal({ isOpen, onClose, onAdd, selectedFolder, folders, onAddF
       } catch (error) {
         console.warn('Invalid otpauth URL:', error);
       }
+    }
+    
+    // Sanitize input based on field type
+    switch (fieldName) {
+      case 'website':
+        value = sanitizeURL(value);
+        break;
+      case 'username':
+        value = sanitizeInput(value, { maxLength: 255 });
+        break;
+      case 'password':
+        // Don't sanitize passwords as they may contain special characters
+        break;
+      case 'notes':
+        value = sanitizeNotes(value);
+        break;
+      case 'otp_secret':
+        value = sanitizeInput(value, { maxLength: 100 });
+        break;
+      default:
+        value = sanitizeInput(value);
+        break;
     }
     
     setFormData({

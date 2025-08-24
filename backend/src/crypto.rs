@@ -105,3 +105,17 @@ pub fn decrypt_password(encrypted_password: &[u8]) -> Result<String, String> {
     String::from_utf8(decrypted_data)
         .map_err(|e| format!("Failed to convert decrypted data to string: {}", e))
 }
+
+/// Encrypts metadata (website URL or username)
+pub fn encrypt_metadata(metadata: &str) -> Result<Vec<u8>, String> {
+    let key = generate_key()?;
+    encrypt(metadata.as_bytes().to_vec(), &key)
+}
+
+/// Decrypts metadata from binary data
+pub fn decrypt_metadata(encrypted_metadata: &[u8]) -> Result<String, String> {
+    let key = generate_key()?;
+    let decrypted_data = decrypt(encrypted_metadata.to_vec(), &key)?;
+    String::from_utf8(decrypted_data)
+        .map_err(|e| format!("Failed to convert decrypted metadata to string: {}", e))
+}

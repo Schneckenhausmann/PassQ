@@ -1,8 +1,12 @@
 # Use latest stable Rust with slim Debian Bookworm
 FROM rust:slim-bookworm AS builder
 
-# Install PostgreSQL development libraries
-RUN apt-get update && apt-get install -y libpq-dev && rm -rf /var/lib/apt/lists/*
+# Install PostgreSQL development libraries and build dependencies
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

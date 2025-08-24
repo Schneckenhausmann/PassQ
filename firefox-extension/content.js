@@ -6,10 +6,32 @@ class PassQAutofill {
     this.isActive = false;
     this.credentials = [];
     this.overlayVisible = false;
+    this.domSanitizer = new PassQDOMSanitizer();
+    this.shadowRoot = null;
+    this.shadowHost = null;
+    // Security: Define allowed domains for autofill
+    this.allowedDomains = new Set([
+      'github.com',
+      'gitlab.com',
+      'google.com',
+      'microsoft.com',
+      'amazon.com',
+      'facebook.com',
+      'twitter.com',
+      'linkedin.com',
+      'stackoverflow.com',
+      'reddit.com'
+    ]);
     this.init();
   }
 
   async init() {
+    // Security: Check if current domain is allowed
+    if (!this.isDomainAllowed(window.location.hostname)) {
+      console.log('PassQ: Domain not in whitelist, autofill disabled');
+      return;
+    }
+
     // Check if user is logged in
     try {
       const response = await browser.runtime.sendMessage({ action: 'checkLoginStatus' });
@@ -31,14 +53,32 @@ class PassQAutofill {
   }
 
   handleMessage(message, sender, sendResponse) {
+    // Security: Validate message sender
+    if (!this.isValidSender(sender)) {
+      console.warn('PassQ: Invalid message sender:', sender);
+      sendResponse({ success: false, error: 'Invalid sender' });
+      return;
+    }
+
+    // Security: Validate message structure
+    if (!this.isValidMessage(message)) {
+      console.warn('PassQ: Invalid message structure:', message);
+      sendResponse({ success: false, error: 'Invalid message' });
+      return;
+    }
+
     switch (message.action) {
       case 'autofill':
-        this.fillCredentials(message.credential);
-        sendResponse({ success: true });
+        if (message.credential && this.isDomainAllowed(window.location.hostname)) {
+          this.fillCredentials(message.credential);
+          sendResponse({ success: true });
+        } else {
+          sendResponse({ success: false, error: 'Domain not allowed or invalid credential' });
+        }
         break;
       case 'loginStatusChanged':
         this.isActive = message.isLoggedIn;
-        if (this.isActive) {
+        if (this.isActive && this.isDomainAllowed(window.location.hostname)) {
           this.setupAutofill();
         } else {
           this.cleanup();
@@ -48,6 +88,121 @@ class PassQAutofill {
       default:
         sendResponse({ success: false, error: 'Unknown action' });
     }
+  }
+
+  // Security: Domain whitelist validation
+  isDomainAllowed(domain) {
+    if (!domain) return false;
+    
+    // Remove subdomains for checking (e.g., www.github.com -> github.com)
+    const baseDomain = domain.split('.').slice(-2).join('.');
+    
+    return this.allowedDomains.has(domain) || this.allowedDomains.has(baseDomain);
+  }
+
+  // Security: Validate message sender
+  isValidSender(sender) {
+    // Only accept messages from the extension itself
+    return sender && sender.id === browser.runtime.id;
+  }
+
+  // Security: Validate message structure
+  isValidMessage(message) {
+    if (!message || typeof message !== 'object') return false;
+    if (!message.action || typeof message.action !== 'string') return false;
+    
+    // Validate specific message types
+    switch (message.action) {
+      case 'autofill':
+        return message.credential && typeof message.credential === 'object';
+      case 'loginStatusChanged':
+        return typeof message.isLoggedIn === 'boolean';
+      default:
+        return true; // Allow other actions but log them
+    }
+  }
+
+  // Security: Create isolated Shadow DOM for extension UI
+  createShadowDOM() {
+    if (this.shadowRoot) {
+      return this.shadowRoot;
+    }
+
+    // Create shadow host element
+    this.shadowHost = this.domSanitizer.createSafeElement('div', {
+      'id': 'passq-shadow-host'
+    });
+    this.shadowHost.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 2147483647;
+      pointer-events: none;
+    `;
+
+    // Create shadow root with closed mode for better isolation
+    this.shadowRoot = this.shadowHost.attachShadow({ mode: 'closed' });
+
+    // Add isolated styles to shadow DOM
+    const style = document.createElement('style');
+    style.textContent = `
+      .passq-credential-overlay {
+        position: fixed;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 10000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        pointer-events: auto;
+      }
+      
+      .passq-credential-item {
+        padding: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s;
+      }
+      
+      .passq-credential-item:hover {
+        background-color: #f5f5f5;
+      }
+      
+      .passq-credential-item:last-child {
+        border-bottom: none;
+      }
+      
+      .passq-message {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #333;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 4px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        z-index: 10001;
+        pointer-events: auto;
+      }
+    `;
+    
+    this.shadowRoot.appendChild(style);
+    document.body.appendChild(this.shadowHost);
+    
+    return this.shadowRoot;
+  }
+
+  // Security: Remove Shadow DOM
+  removeShadowDOM() {
+    if (this.shadowHost && this.shadowHost.parentNode) {
+      this.shadowHost.parentNode.removeChild(this.shadowHost);
+    }
+    this.shadowRoot = null;
+    this.shadowHost = null;
   }
 
   setupAutofill() {
@@ -127,10 +282,11 @@ class PassQAutofill {
 
   addAutofillButton(usernameField, passwordField) {
     // Create PassQ autofill button
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'passq-autofill-btn';
-    button.innerHTML = '🔑';
+    const button = this.domSanitizer.createSafeElement('button', {
+      'class': 'passq-autofill-btn',
+      'type': 'button'
+    });
+    this.domSanitizer.safeSetTextContent(button, '🔑');
     button.title = 'Fill with PassQ';
     button.style.cssText = `
       position: absolute;
@@ -193,6 +349,12 @@ class PassQAutofill {
     // Get current domain
     const domain = window.location.hostname;
     
+    // Security: Validate domain before proceeding
+    if (!this.isDomainAllowed(domain)) {
+      console.log('PassQ: Domain not allowed for autofill:', domain);
+      return;
+    }
+    
     try {
       // Find credentials for current domain
       const response = await browser.runtime.sendMessage({
@@ -217,6 +379,13 @@ class PassQAutofill {
 
     const domain = window.location.hostname;
     
+    // Security: Validate domain before proceeding
+    if (!this.isDomainAllowed(domain)) {
+      console.log('PassQ: Domain not allowed for credential selection:', domain);
+      this.showMessage('Domain not allowed for autofill');
+      return;
+    }
+    
     try {
       const response = await browser.runtime.sendMessage({
         action: 'findCredentials',
@@ -239,45 +408,32 @@ class PassQAutofill {
     // Remove existing overlay
     this.hideCredentialOverlay();
 
-    const overlay = document.createElement('div');
-    overlay.className = 'passq-credential-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      background: white;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      z-index: 10001;
-      max-width: 300px;
-      max-height: 200px;
-      overflow-y: auto;
-    `;
+    // Create Shadow DOM for isolation
+    const shadowRoot = this.createShadowDOM();
+
+    const overlay = this.domSanitizer.createSafeElement('div', {
+      'class': 'passq-credential-overlay'
+    });
 
     // Position overlay near the username field
     const rect = usernameField.getBoundingClientRect();
     overlay.style.left = `${rect.left}px`;
     overlay.style.top = `${rect.bottom + 5}px`;
+    overlay.style.width = `${Math.max(200, rect.width)}px`;
 
     // Create credential list
     this.credentials.forEach((credential, index) => {
-      const item = document.createElement('div');
-      item.className = 'passq-credential-item';
-      item.style.cssText = `
-        padding: 12px;
-        border-bottom: 1px solid #f3f4f6;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      `;
+      const item = this.domSanitizer.createSafeElement('div', {
+        'class': 'passq-credential-item'
+      });
 
-      const title = document.createElement('div');
+      const title = this.domSanitizer.createSafeElement('div');
       title.style.cssText = 'font-weight: 500; color: #1f2937;';
-      title.textContent = credential.title || this.extractDomain(credential.website || '');
+      this.domSanitizer.safeSetTextContent(title, credential.title || this.extractDomain(credential.website || ''));
 
-      const username = document.createElement('div');
+      const username = this.domSanitizer.createSafeElement('div');
       username.style.cssText = 'font-size: 14px; color: #6b7280;';
-      username.textContent = credential.username || '';
+      this.domSanitizer.safeSetTextContent(username, credential.username || '');
 
       item.appendChild(title);
       item.appendChild(username);
@@ -300,7 +456,7 @@ class PassQAutofill {
       overlay.appendChild(item);
     });
 
-    document.body.appendChild(overlay);
+    shadowRoot.appendChild(overlay);
     this.overlayVisible = true;
 
     // Close overlay when clicking outside
@@ -310,11 +466,13 @@ class PassQAutofill {
   }
 
   hideCredentialOverlay() {
-    const overlay = document.querySelector('.passq-credential-overlay');
-    if (overlay) {
-      overlay.remove();
-      this.overlayVisible = false;
-      document.removeEventListener('click', this.handleOutsideClick.bind(this));
+    if (this.shadowRoot) {
+      const overlay = this.shadowRoot.querySelector('.passq-credential-overlay');
+      if (overlay) {
+        overlay.remove();
+        this.overlayVisible = false;
+        document.removeEventListener('click', this.handleOutsideClick.bind(this));
+      }
     }
   }
 
@@ -369,15 +527,19 @@ class PassQAutofill {
   }
 
   showMessage(text) {
+    // Create Shadow DOM for isolation
+    const shadowRoot = this.createShadowDOM();
+    
     // Remove existing message
-    const existingMessage = document.querySelector('.passq-message');
+    const existingMessage = shadowRoot.querySelector('.passq-message');
     if (existingMessage) {
       existingMessage.remove();
     }
 
-    const message = document.createElement('div');
-    message.className = 'passq-message';
-    message.textContent = text;
+    const message = this.domSanitizer.createSafeElement('div', {
+      'class': 'passq-message'
+    });
+    this.domSanitizer.safeSetTextContent(message, text);
     message.style.cssText = `
       position: fixed;
       top: 20px;
@@ -391,7 +553,7 @@ class PassQAutofill {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     `;
 
-    document.body.appendChild(message);
+    shadowRoot.appendChild(message);
 
     // Auto-remove after 3 seconds
     setTimeout(() => {
@@ -457,6 +619,9 @@ class PassQAutofill {
     // Remove event listeners
     document.removeEventListener('keydown', this.handleKeyboardShortcut.bind(this));
     document.removeEventListener('click', this.handleOutsideClick.bind(this));
+    
+    // Remove Shadow DOM
+    this.removeShadowDOM();
     
     // Reset state
     this.isActive = false;

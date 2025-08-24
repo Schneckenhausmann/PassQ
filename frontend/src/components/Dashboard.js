@@ -48,15 +48,15 @@ function Dashboard() {
         folderAPI.getAll()
       ]);
       
-      setPasswords(passwordsResponse.data.data || []);
-      const apiFolders = foldersResponse.data.data || [];
+      setPasswords(passwordsResponse.data || []);
+      const apiFolders = foldersResponse.data || [];
       // Map backend field names to frontend field names
       const mappedFolders = apiFolders.map(folder => ({
         ...folder,
         parentId: folder.parent_folder_id
       }));
       setFolders(mappedFolders);
-      updateFolderCounts(passwordsResponse.data.data || [], mappedFolders);
+      updateFolderCounts(passwordsResponse.data || [], mappedFolders);
       
       // Load shared items
       await loadSharedItems();
@@ -71,7 +71,7 @@ function Dashboard() {
   const loadSharedItems = async () => {
     try {
       const response = await passwordAPI.getSharedPasswords();
-      setSharedPasswords(response.data.data || []);
+      setSharedPasswords(response.data || []);
     } catch (err) {
       console.error('Error loading shared items:', err);
     }
@@ -126,7 +126,7 @@ function Dashboard() {
       await loadData();
       
       // Show success message
-      const importedCount = response.data.data;
+      const importedCount = response.data;
       alert(`Successfully imported ${importedCount} passwords`);
     } catch (err) {
       console.error('Error importing CSV:', err);
@@ -168,7 +168,7 @@ function Dashboard() {
       };
       
       const response = await folderAPI.create(folderData);
-      const newFolder = response.data.data;
+      const newFolder = response.data;
       // Map backend field names to frontend field names
       const mappedNewFolder = {
         ...newFolder,
@@ -280,7 +280,7 @@ function Dashboard() {
     
     try {
       const response = await folderAPI.update(folderId, { name: newName.trim() });
-      const updatedFolder = response.data.data;
+      const updatedFolder = response.data;
       
       const updatedFolders = folders.map(folder => 
         folder.id === folderId ? { ...folder, name: updatedFolder.name } : folder
@@ -307,7 +307,7 @@ function Dashboard() {
       };
       
       const response = await passwordAPI.create(passwordData);
-      const newEntry = response.data.data;
+      const newEntry = response.data;
       
       const updatedPasswords = [...passwords, newEntry];
       setPasswords(updatedPasswords);

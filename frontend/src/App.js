@@ -1,50 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import Login from './components/Login';
-import Registration from './components/Registration';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import Logo from './components/Logo';
 import { Icons } from './components/Icons';
 import PasswordChangeModal from './components/PasswordChangeModal';
 import './App.css';
 
+import AuthPages from './components/AuthPages';
+
 function App() {
-  const [showLogin, setShowLogin] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    const storedUsername = localStorage.getItem('username');
-    if (token && storedUsername) {
-      setIsAuthenticated(true);
-      setUsername(storedUsername);
-    }
+    // Check authentication status by making a request to a protected endpoint
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch('/auth/verify', {
+          method: 'GET',
+          credentials: 'include', // Include cookies in the request
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            setIsAuthenticated(true);
+            setUsername(data.data.username);
+          }
+        }
+      } catch (error) {
+        console.log('Authentication check failed:', error);
+        // User is not authenticated, which is fine
+      }
+    };
+    
+    checkAuthStatus();
   }, []);
 
-  const handleLoginSuccess = (token, user) => {
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('username', user);
+  const handleLoginSuccess = (user) => {
+    // No need to store token in localStorage anymore - it's in HttpOnly cookie
     setIsAuthenticated(true);
     setUsername(user);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('username');
+  const handleLogout = async () => {
+    // Call logout endpoint to clear the HttpOnly cookie
+    try {
+      await fetch('/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (error) {
+      console.log('Logout request failed:', error);
+    }
     setIsAuthenticated(false);
     setUsername('');
-    setShowLogin(true);
   };
 
-  const handleRegistrationSuccess = () => {
-    setShowLogin(true);
-  };
-
-  if (isAuthenticated) {
-    return (
-      <Router>
+  return (
+    <Router>
+      {isAuthenticated ? (
         <div className="h-screen bg-white text-black flex flex-col">
           <header className="flex items-center justify-between px-4 py-3 md:px-8 md:py-4 border-b-4 border-black sticky top-0 z-50 bg-white">
             <div className="flex items-center gap-3">
@@ -73,25 +95,13 @@ function App() {
             onClose={() => setIsSettingsModalOpen(false)} 
           />
         </div>
-      </Router>
-    );
-  }
-
-  return (
-    <Router>
-      <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center">
-        <header className="flex flex-col items-center gap-2 py-6">
-          <Logo size={60} />
-          <h1 className="text-3xl font-extrabold tracking-widest select-none">PassQ</h1>
-        </header>
-        <div className="w-full max-w-xs md:max-w-sm cartoon-border cartoon-shadow bg-white rounded-lg p-6 mt-2">
-          {showLogin ? (
-            <Login onSwitch={() => setShowLogin(false)} onLoginSuccess={handleLoginSuccess} />
-          ) : (
-            <Registration onSwitch={() => setShowLogin(true)} onRegistrationSuccess={handleRegistrationSuccess} />
-          )}
-        </div>
-      </div>
+      ) : (
+        <Routes>
+          <Route path="/forgot-password" element={<AuthPages onLoginSuccess={handleLoginSuccess} />} />
+          <Route path="/reset-password" element={<AuthPages onLoginSuccess={handleLoginSuccess} />} />
+          <Route path="/*" element={<AuthPages onLoginSuccess={handleLoginSuccess} />} />
+        </Routes>
+      )}
     </Router>
   );
 }

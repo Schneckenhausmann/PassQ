@@ -3,28 +3,45 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono;
 
-#[derive(Queryable, Serialize, Debug)]
+#[derive(Queryable, Selectable, Serialize, Debug)]
+#[diesel(table_name = crate::schema::users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
     pub username: String,
     pub password_hash: String,
     pub salt: String,
     pub mfa_secret: Option<String>,
+    pub reset_token: Option<String>,
+    pub reset_token_expires_at: Option<chrono::NaiveDateTime>,
+    pub email: String,
 }
 
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::users)]
 pub struct NewUser {
+    #[diesel(column_name = id)]
     pub id: Uuid,
+    #[diesel(column_name = username)]
     pub username: String,
+    #[diesel(column_name = password_hash)]
     pub password_hash: String,
+    #[diesel(column_name = salt)]
     pub salt: String,
+    #[diesel(column_name = mfa_secret)]
     pub mfa_secret: Option<String>,
+    #[diesel(column_name = reset_token)]
+    pub reset_token: Option<String>,
+    #[diesel(column_name = reset_token_expires_at)]
+    pub reset_token_expires_at: Option<chrono::NaiveDateTime>,
+    #[diesel(column_name = email)]
+    pub email: String,
 }
 
 #[derive(Deserialize)]
 pub struct UserRegistration {
     pub username: String,
+    pub email: String,
     pub password: String,
 }
 
@@ -32,6 +49,28 @@ pub struct UserRegistration {
 pub struct UserLogin {
     pub username: String,
     pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct PasswordResetRequest {
+    pub email: String,
+}
+
+#[derive(Deserialize)]
+pub struct PasswordResetConfirm {
+    pub token: String,
+    pub new_password: String,
+}
+
+#[derive(Deserialize)]
+pub struct RefreshTokenRequest {
+    pub refresh_token: String,
+}
+
+#[derive(Deserialize)]
+pub struct ChangePasswordRequest {
+    pub current_password: String,
+    pub new_password: String,
 }
 
 // Password models
@@ -48,6 +87,8 @@ pub struct Password {
     pub notes: Option<String>,
     pub otp_secret: Option<String>,
     pub attachments: Option<serde_json::Value>,
+    pub encrypted_website: Option<Vec<u8>>,
+    pub encrypted_username: Option<Vec<u8>>,
 }
 
 #[derive(Insertable, Deserialize)]
@@ -62,6 +103,8 @@ pub struct NewPassword {
     pub notes: Option<String>,
     pub otp_secret: Option<String>,
     pub attachments: Option<serde_json::Value>,
+    pub encrypted_website: Option<Vec<u8>>,
+    pub encrypted_username: Option<Vec<u8>>,
 }
 
 #[derive(Deserialize)]
@@ -170,10 +213,47 @@ impl<T> ApiResponse<T> {
     }
 
     pub fn error(message: String) -> Self {
-        ApiResponse {
+        Self {
             success: false,
             message,
             data: None,
         }
     }
 }
+
+// TODO: Fix LoginHistory model type mappings
+// #[derive(Queryable, Selectable, Serialize, Deserialize, Debug)]
+// #[diesel(table_name = crate::schema::login_history)]
+// #[diesel(check_for_backend(diesel::pg::Pg))]
+// pub struct LoginHistory {
+//     pub id: i32,
+//     pub user_id: Uuid,
+//     pub ip_address: String,
+//     pub country: Option<String>,
+//     pub region: Option<String>,
+//     pub city: Option<String>,
+//     pub latitude: Option<String>,
+//     pub longitude: Option<String>,
+//     pub timezone: Option<String>,
+//     pub isp: Option<String>,
+//     pub user_agent: Option<String>,
+//     pub login_time: chrono::DateTime<chrono::Utc>,
+//     pub is_suspicious: bool,
+// }
+
+// #[derive(Insertable, Serialize, Deserialize, Debug)]
+// #[diesel(table_name = crate::schema::login_history)]
+// pub struct NewLoginHistory {
+//     pub user_id: Uuid,
+//     pub ip_address: String,
+//     pub country: Option<String>,
+//     pub region: Option<String>,
+//     pub city: Option<String>,
+//     pub latitude: Option<String>,
+//     pub longitude: Option<String>,
+//     pub timezone: Option<String>,
+//     pub isp: Option<String>,
+//     pub user_agent: Option<String>,
+//     pub login_time: chrono::DateTime<chrono::Utc>,
+//     pub is_suspicious: bool,
+// }
