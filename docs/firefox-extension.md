@@ -43,11 +43,12 @@ Injected into web pages to detect forms and provide autofill functionality.
 Provides the main user interface accessible from the browser toolbar.
 
 **Features:**
-- User authentication interface
-- Password search and selection
-- Quick access to credential management
+- User authentication interface with cartoon/comic book styling
+- Password search and selection with full-width search bar
+- Quick access to credential management with improved spacing
+- Action buttons (copy username, copy password, edit) with rounded corners and black shadows
 - Extension settings and configuration
-- Modern, responsive design
+- Comic book themed design with black borders and full-width separator lines
 
 ## Security Implementation
 
@@ -143,13 +144,12 @@ firefox-extension/
 ├── content.js            # Content script for form detection
 ├── popup.html            # Extension popup interface
 ├── popup.js              # Popup functionality
-├── popup.css             # Popup styling
+├── popup.css             # Popup styling with comic book theme
 ├── content.css           # Injected styles
-├── icons/                # Extension icons
-│   ├── icon-16.png
-│   ├── icon-32.png
-│   ├── icon-48.png
-│   └── icon-128.png
+├── icons/                # Extension icons (SVG format)
+│   ├── globe-placeholder.svg
+│   ├── icon-48.svg
+│   └── icon-96.svg
 └── README.md             # Extension documentation
 ```
 
@@ -195,9 +195,12 @@ firefox-extension/
 ## Future Enhancements
 
 ### Planned Features
+- **In-popup Editor**: Implement credential editing directly in the popup
+- **SVG Icons**: Replace emoji icons with SVG icons from the web version
 - **Password Generation**: Integrate password generation
 - **Secure Notes**: Support for secure note autofill
 - **Multi-factor Authentication**: TOTP integration
+- **Bitwarden-like Features**: Identity storage, card storage, and secure notes
 - **Offline Mode**: Limited offline functionality
 
 ### Technical Improvements

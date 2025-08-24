@@ -111,8 +111,22 @@ class PassQPopup {
       img.style.height = '100%';
       img.style.borderRadius = '4px';
       img.onerror = () => {
-        siteFavicon.innerHTML = '🌐';
-      };
+         console.log('Favicon failed, trying globe placeholder');
+          siteFavicon.innerHTML = '';
+          const globeImg = document.createElement('img');
+          globeImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iNyIgZmlsbD0id2hpdGUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTEgOGgxNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDFjLTIuNSAzLTIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNOCAxYzIuNSAzIDIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNMyA0LjVjMyAwIDcgMCAxMCAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS4yIiBmaWxsPSJub25lIi8+CiAgPHBhdGggZD0iTTMgMTEuNWMzIDAgNyAwIDEwIDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+';
+          globeImg.style.width = '100%';
+          globeImg.style.height = '100%';
+          globeImg.alt = 'Globe';
+          globeImg.onerror = () => {
+            console.log('Globe placeholder failed, using emoji');
+            siteFavicon.innerHTML = '🌐';
+            siteFavicon.style.fontSize = '16px';
+            siteFavicon.style.textAlign = 'center';
+            siteFavicon.style.lineHeight = '24px';
+          };
+          siteFavicon.appendChild(globeImg);
+       };
       siteFavicon.innerHTML = '';
       siteFavicon.appendChild(img);
     }
@@ -240,7 +254,30 @@ class PassQPopup {
     // Set favicon
     const favicon = item.querySelector('.site-favicon');
     if (favicon) {
-      favicon.style.backgroundImage = `url(https://www.google.com/s2/favicons?domain=${domain})`;
+      const img = document.createElement('img');
+      img.src = `https://www.google.com/s2/favicons?domain=${domain}`;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.borderRadius = '4px';
+      img.onerror = () => {
+          console.log('Credential favicon failed, trying globe placeholder');
+           favicon.innerHTML = '';
+           const globeImg = document.createElement('img');
+           globeImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iNyIgZmlsbD0id2hpdGUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTEgOGgxNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxwYXRoIGQ9Ik04IDFjLTIuNSAzLTIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNOCAxYzIuNSAzIDIuNSA5IDAgMTQiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiLz4KICA8cGF0aCBkPSJNMyA0LjVjMyAwIDcgMCAxMCAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS4yIiBmaWxsPSJub25lIi8+CiAgPHBhdGggZD0iTTMgMTEuNWMzIDAgNyAwIDEwIDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIxLjIiIGZpbGw9Im5vbmUiLz4KPC9zdmc+';
+           globeImg.style.width = '100%';
+           globeImg.style.height = '100%';
+           globeImg.alt = 'Globe';
+           globeImg.onerror = () => {
+             console.log('Globe placeholder failed, using emoji');
+             favicon.innerHTML = '🌐';
+             favicon.style.fontSize = '12px';
+             favicon.style.textAlign = 'center';
+             favicon.style.lineHeight = '24px';
+           };
+           favicon.appendChild(globeImg);
+        };
+      favicon.innerHTML = '';
+      favicon.appendChild(img);
     }
     
     // Set credential info

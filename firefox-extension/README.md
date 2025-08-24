@@ -7,7 +7,7 @@ A Firefox extension for PassQ password manager that provides seamless autofill f
 - 🔐 **Secure Autofill**: Automatically fill login forms with your PassQ credentials
 - 🌐 **Website Detection**: Smart detection of login forms and matching credentials
 - 🔍 **Quick Search**: Search through your passwords directly from the extension popup
-- 🎨 **Modern UI**: Clean, dark-themed interface matching PassQ's design
+- 🎨 **Comic Book UI**: Cartoon/comic book styled interface with black borders, shadows, and rounded corners matching PassQ's design
 - 🚀 **Fast Access**: Quick access to your vault and password management
 - 🔒 **Secure Communication**: Encrypted communication with your local PassQ instance
 
@@ -53,10 +53,12 @@ For production use, the extension would need to be packaged and submitted to Moz
 
 ### Extension Popup
 
-- **Current Site**: Shows credentials available for the current website
-- **Search**: Search through all your passwords
+- **Current Site**: Shows credentials available for the current website with improved spacing
+- **Search**: Search through all your passwords with full-width search bar
 - **Quick Autofill**: One-click autofill for the current site
+- **Action Buttons**: Copy username, copy password, and edit buttons with rounded corners and black shadows
 - **Open Vault**: Direct link to your PassQ web interface
+- **Modern Design**: Comic book styling with black separator lines extending full width
 
 ### Keyboard Shortcuts
 
@@ -66,7 +68,7 @@ For production use, the extension would need to be packaged and submitted to Moz
 
 ### Backend URL
 
-By default, the extension connects to `http://localhost:5000`. To change this:
+By default, the extension connects to `http://localhost:8080`. To change this:
 
 1. Edit `background.js`
 2. Update the `apiUrl` variable
@@ -111,9 +113,10 @@ firefox-extension/
    - Handles form filling and user interactions
 
 3. **Popup** (`popup.html`, `popup.js`, `popup.css`):
-   - Provides the main extension interface
+   - Provides the main extension interface with cartoon/comic book styling
    - Handles login, search, and quick autofill
-   - Shows current site credentials
+   - Shows current site credentials with improved spacing and visual design
+   - Features rounded action buttons with black shadows and full-width separator lines
 
 ### Testing
 

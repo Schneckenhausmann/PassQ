@@ -74,7 +74,16 @@ The application uses PostgreSQL with the following main tables:
 
 ## Recent Updates
 
-### Data Management Features (Latest)
+### Firefox Extension UI Improvements (Latest)
+- ✅ **Comic Book Styling**: Updated extension popup with cartoon/comic book theme matching the main application
+- ✅ **Rounded Action Buttons**: Increased border-radius from 4px to 8px for more rounded corners
+- ✅ **Enhanced Shadows**: Changed button shadows to solid black for stronger visual impact
+- ✅ **Improved Spacing**: Increased spacing between credential entries by 5px for better readability
+- ✅ **Full-Width Separators**: Black separator lines now extend to the full width of the popup
+- ✅ **Wider Password Entries**: Reduced side padding to give password entries 10px more width
+- ✅ **Better Button Spacing**: Increased gap between action buttons from 3px to 6px
+
+### Data Management Features
 - ✅ **CSV Export with Password Confirmation**: Secure password export requiring user password verification
 - ✅ **CSV Import Support**: Import passwords from various password managers (Bitwarden, LastPass, 1Password)
 - ✅ **Data Portability**: Full backup and restore capabilities for user data migration
