@@ -568,11 +568,14 @@ mod handlers {
             actix_web::error::ErrorInternalServerError("Database connection error")
         })?;
         
+        let folder_name = folder_data.name.as_ref()
+            .ok_or_else(|| actix_web::error::ErrorBadRequest("Folder name is required"))?;
+        
         let new_folder = NewFolder {
             id: Uuid::new_v4(),
             user_id,
             parent_folder_id: folder_data.parent_folder_id,
-            name: folder_data.name.clone(),
+            name: folder_name.clone(),
         };
         
         let created_folder = diesel::insert_into(folders::table)
@@ -610,7 +613,7 @@ mod handlers {
         })?;
         
         let user_id = claims.sub;
-        use crate::schema::folders;
+        use crate::schema::{folders, passwords, shares};
         
         let folder_id = path.into_inner();
         let mut conn = db_pool.get().map_err(|e| {
@@ -618,7 +621,62 @@ mod handlers {
             actix_web::error::ErrorInternalServerError("Database connection error")
         })?;
         
-        // Delete folder only if it belongs to the authenticated user
+        // First, verify the folder exists and belongs to the user
+        let folder = folders::table
+            .filter(folders::id.eq(folder_id))
+            .filter(folders::user_id.eq(user_id))
+            .first::<Folder>(&mut conn)
+            .optional()
+            .map_err(|e| {
+                log::error!("Database error: {}", e);
+                actix_web::error::ErrorInternalServerError("Database error")
+            })?;
+        
+        if folder.is_none() {
+            log::warn!("Folder not found or access denied for user: {}", user_id);
+            return Err(actix_web::error::ErrorNotFound("Folder not found"));
+        }
+        
+        let folder = folder.unwrap();
+        
+        // Move all passwords from this folder to its parent folder
+        diesel::update(
+            passwords::table
+                .filter(passwords::folder_id.eq(folder_id))
+                .filter(passwords::user_id.eq(user_id))
+        )
+            .set(passwords::folder_id.eq(folder.parent_folder_id))
+            .execute(&mut conn)
+            .map_err(|e| {
+                log::error!("Failed to move passwords: {}", e);
+                actix_web::error::ErrorInternalServerError("Database error")
+            })?;
+        
+        // Move all subfolders to the parent folder
+        diesel::update(
+            folders::table
+                .filter(folders::parent_folder_id.eq(folder_id))
+                .filter(folders::user_id.eq(user_id))
+        )
+            .set(folders::parent_folder_id.eq(folder.parent_folder_id))
+            .execute(&mut conn)
+            .map_err(|e| {
+                log::error!("Failed to move subfolders: {}", e);
+                actix_web::error::ErrorInternalServerError("Database error")
+            })?;
+        
+        // Delete any shares for this folder
+        diesel::delete(
+            shares::table
+                .filter(shares::folder_id.eq(folder_id))
+        )
+            .execute(&mut conn)
+            .map_err(|e| {
+                log::error!("Failed to delete folder shares: {}", e);
+                actix_web::error::ErrorInternalServerError("Database error")
+            })?;
+        
+        // Finally, delete the folder
         let deleted_rows = diesel::delete(
             folders::table
                 .filter(folders::id.eq(folder_id))
@@ -631,13 +689,96 @@ mod handlers {
             })?;
         
         if deleted_rows == 0 {
+            log::warn!("Failed to delete folder for user: {}", user_id);
+            return Err(actix_web::error::ErrorInternalServerError("Failed to delete folder"));
+        }
+        
+        log::info!("Folder {} deleted successfully by user {}", folder_id, user_id);
+        Ok(HttpResponse::Ok().json(ApiResponse::success(
+            "Folder deleted successfully".to_string(),
+            None::<String>
+        )))
+    }
+
+    // Update a folder
+    pub async fn update_folder(
+        req: actix_web::HttpRequest,
+        path: web::Path<Uuid>,
+        folder_data: web::Json<FolderRequest>,
+        db_pool: web::Data<db::DbPool>,
+    ) -> Result<HttpResponse, Error> {
+        // Extract and validate JWT token
+        let auth_header = req.headers().get("Authorization")
+            .and_then(|h| h.to_str().ok())
+            .and_then(|h| h.strip_prefix("Bearer "))
+            .ok_or_else(|| {
+                log::warn!("Missing or invalid Authorization header");
+                actix_web::error::ErrorUnauthorized("Missing or invalid Authorization header")
+            })?;
+        
+        let claims = auth::validate_token(auth_header).map_err(|e| {
+            log::error!("JWT validation failed: {}", e);
+            actix_web::error::ErrorUnauthorized("Invalid token")
+        })?;
+        
+        let user_id = claims.sub;
+        use crate::schema::folders;
+        
+        let folder_id = path.into_inner();
+        let mut conn = db_pool.get().map_err(|e| {
+            log::error!("Failed to get database connection: {}", e);
+            actix_web::error::ErrorInternalServerError("Database connection error")
+        })?;
+        
+        // Update folder only if it belongs to the authenticated user
+        let updated_rows = if let Some(ref name) = folder_data.name {
+            // Update name only
+            diesel::update(
+                folders::table
+                    .filter(folders::id.eq(folder_id))
+                    .filter(folders::user_id.eq(user_id))
+            )
+                .set(folders::name.eq(name))
+                .execute(&mut conn)
+                .map_err(|e| {
+                    log::error!("Database error: {}", e);
+                    actix_web::error::ErrorInternalServerError("Database error")
+                })?
+        } else if folder_data.parent_folder_id.is_some() {
+            // Update parent_folder_id
+            diesel::update(
+                folders::table
+                    .filter(folders::id.eq(folder_id))
+                    .filter(folders::user_id.eq(user_id))
+            )
+                .set(folders::parent_folder_id.eq(folder_data.parent_folder_id))
+                .execute(&mut conn)
+                .map_err(|e| {
+                    log::error!("Database error: {}", e);
+                    actix_web::error::ErrorInternalServerError("Database error")
+                })?
+        } else {
+            return Err(actix_web::error::ErrorBadRequest("No fields to update"));
+        };
+        
+        if updated_rows == 0 {
             log::warn!("Folder not found or access denied for user: {}", user_id);
             return Err(actix_web::error::ErrorNotFound("Folder not found"));
         }
         
+        // Fetch the updated folder to return it
+        let updated_folder = folders::table
+            .filter(folders::id.eq(folder_id))
+            .filter(folders::user_id.eq(user_id))
+            .first::<Folder>(&mut conn)
+            .map_err(|e| {
+                log::error!("Database error: {}", e);
+                actix_web::error::ErrorInternalServerError("Database error")
+            })?;
+        
         Ok(HttpResponse::Ok().json(ApiResponse::success(
-            "Folder deleted successfully".to_string(),
-            None::<String>
+            "Folder updated successfully".to_string(),
+            Some(updated_folder)
         )))
     }
 
@@ -1573,6 +1714,7 @@ async fn main() -> std::io::Result<()> {
             )
             .service(
                 web::resource("/folders/{id}")
+                    .route(web::put().to(handlers::update_folder))
                     .route(web::delete().to(handlers::delete_folder))
             )
             // Sharing endpoints

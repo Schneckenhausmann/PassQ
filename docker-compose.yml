@@ -3,7 +3,7 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: passq
-      POSTGRES_PASSWORD: securepassword
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: passq
     ports:
       - "5432:5432"
@@ -20,9 +20,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: postgres://passq:securepassword@db:5432/passq
-      JWT_SECRET: your_very_secure_jwt_secret_here
-      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef
+      DATABASE_URL: postgres://passq:${POSTGRES_PASSWORD}@db:5432/passq
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     depends_on:
       db:
         condition: service_healthy

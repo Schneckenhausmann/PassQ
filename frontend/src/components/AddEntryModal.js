@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icons } from './Icons';
 
 function AddEntryModal({ isOpen, onClose, onAdd, selectedFolder, folders, onAddFolder }) {
@@ -14,6 +14,14 @@ function AddEntryModal({ isOpen, onClose, onAdd, selectedFolder, folders, onAddF
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [attachments, setAttachments] = useState([]);
+
+  // Update folder_id when selectedFolder changes
+  useEffect(() => {
+    setFormData(prevData => ({
+      ...prevData,
+      folder_id: selectedFolder || 'root'
+    }));
+  }, [selectedFolder]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

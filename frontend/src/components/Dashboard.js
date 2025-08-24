@@ -5,6 +5,7 @@ import AddEntryModal from './AddEntryModal';
 import EditEntryModal from './EditEntryModal';
 import ShareModal from './ShareModal';
 import PasswordConfirmationModal from './PasswordConfirmationModal';
+import DeleteFolderModal from './DeleteFolderModal';
 import SearchBar from './SearchBar';
 import { Icons } from './Icons';
 import Logo from './Logo';
@@ -14,9 +15,7 @@ function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [passwords, setPasswords] = useState([]);
-  const [folders, setFolders] = useState([
-    { id: 'root', name: 'All Items', entryCount: 0, parentId: null },
-  ]);
+  const [folders, setFolders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState('root');
@@ -31,6 +30,10 @@ function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isPasswordConfirmModalOpen, setIsPasswordConfirmModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState(null);
+  const [showMainAddFolderForm, setShowMainAddFolderForm] = useState(false);
+  const [mainNewFolderName, setMainNewFolderName] = useState('');
 
   // Load data from API
   useEffect(() => {
@@ -47,12 +50,13 @@ function Dashboard() {
       
       setPasswords(passwordsResponse.data.data || []);
       const apiFolders = foldersResponse.data.data || [];
-      const allFolders = [
-        { id: 'root', name: 'All Items', entryCount: 0, parentId: null },
-        ...apiFolders
-      ];
-      setFolders(allFolders);
-      updateFolderCounts(passwordsResponse.data.data || [], allFolders);
+      // Map backend field names to frontend field names
+      const mappedFolders = apiFolders.map(folder => ({
+        ...folder,
+        parentId: folder.parent_folder_id
+      }));
+      setFolders(mappedFolders);
+      updateFolderCounts(passwordsResponse.data.data || [], mappedFolders);
       
       // Load shared items
       await loadSharedItems();
@@ -165,8 +169,13 @@ function Dashboard() {
       
       const response = await folderAPI.create(folderData);
       const newFolder = response.data.data;
+      // Map backend field names to frontend field names
+      const mappedNewFolder = {
+        ...newFolder,
+        parentId: newFolder.parent_folder_id
+      };
       
-      const updatedFolders = [...folders, newFolder];
+      const updatedFolders = [...folders, mappedNewFolder];
       setFolders(updatedFolders);
       updateFolderCounts(passwords, updatedFolders);
     } catch (err) {
@@ -175,19 +184,72 @@ function Dashboard() {
     }
   };
 
-  const handleDeleteFolder = async (folderId) => {
+  const handleMainAddFolder = (e) => {
+    e.preventDefault();
+    if (mainNewFolderName.trim()) {
+      handleAddFolder(mainNewFolderName.trim());
+      setMainNewFolderName('');
+      setShowMainAddFolderForm(false);
+    }
+  };
+
+  const handleMainAddFolderCancel = () => {
+    setMainNewFolderName('');
+    setShowMainAddFolderForm(false);
+  };
+
+  const handleDeleteFolder = (folderId) => {
     if (folderId === 'root') return;
     
+    const folder = folders.find(f => f.id === folderId);
+    if (folder) {
+      setFolderToDelete(folder);
+      setDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDeleteFolder = async (folderId, migrationFolderId) => {
     try {
+      // Get passwords in this folder
+      const folderPasswords = passwords.filter(p => p.folder_id === folderId);
+      
+      if (folderPasswords.length > 0) {
+        if (migrationFolderId === 'DELETE_PASSWORDS') {
+          // Delete all passwords in the folder
+          for (const password of folderPasswords) {
+            await passwordAPI.delete(password.id);
+          }
+        } else if (migrationFolderId !== undefined) {
+          // Update passwords to new folder
+          for (const password of folderPasswords) {
+            await passwordAPI.update(password.id, {
+              ...password,
+              folder_id: migrationFolderId
+            });
+          }
+        }
+      }
+      
+      // Delete the folder
       await folderAPI.delete(folderId);
       
       const folderToDelete = folders.find(f => f.id === folderId);
       const parentId = folderToDelete?.parentId || 'root';
       
-      // Move all entries from deleted folder to parent folder
-      const updatedPasswords = passwords.map(password => 
-        password.folder_id === folderId ? { ...password, folder_id: parentId } : password
-      );
+      // Update local state
+      let updatedPasswords;
+      if (migrationFolderId === 'DELETE_PASSWORDS') {
+        // Remove deleted passwords from state
+        updatedPasswords = passwords.filter(password => password.folder_id !== folderId);
+      } else {
+        // Move remaining passwords to new folder
+        updatedPasswords = passwords.map(password => {
+          if (password.folder_id === folderId) {
+            return { ...password, folder_id: migrationFolderId !== undefined ? migrationFolderId : parentId };
+          }
+          return password;
+        });
+      }
       
       // Move all subfolders to parent folder
       const updatedFolders = folders
@@ -197,11 +259,16 @@ function Dashboard() {
         );
       
       setPasswords(updatedPasswords);
+      setFolders(updatedFolders);
       updateFolderCounts(updatedPasswords, updatedFolders);
       
       if (selectedFolder === folderId) {
         setSelectedFolder('root');
       }
+      
+      // Close modal
+      setDeleteModalOpen(false);
+      setFolderToDelete(null);
     } catch (err) {
       console.error('Error deleting folder:', err);
       setError('Failed to delete folder');
@@ -323,6 +390,30 @@ function Dashboard() {
     }
   };
 
+  const handleMoveFolder = async (folderId, targetFolderId) => {
+    try {
+      const folder = folders.find(f => f.id === folderId);
+      if (!folder) return;
+      
+      const updateData = {
+        parent_folder_id: targetFolderId === 'root' ? null : targetFolderId
+      };
+      
+      await folderAPI.update(folderId, updateData);
+      
+      const updatedFolders = folders.map(folder => 
+        folder.id === folderId 
+          ? { ...folder, parentId: targetFolderId === 'root' ? null : targetFolderId }
+          : folder
+      );
+      setFolders(updatedFolders);
+      updateFolderCounts(passwords, updatedFolders);
+    } catch (err) {
+      console.error('Error moving folder:', err);
+      setError('Failed to move folder');
+    }
+  };
+
   // Handle search results
   const handleSearchResults = (results, term) => {
     setSearchResults(results);
@@ -370,26 +461,67 @@ function Dashboard() {
     <div className="w-full h-[calc(100vh-56px)] flex flex-col">
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden bg-white relative">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex md:flex-col md:w-64 md:min-w-[200px] border-r border-black/20 bg-white p-4 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
+        <aside className="hidden md:flex md:flex-col md:w-128 md:min-w-[512px] border-r border-black/20 bg-white pl-0 pr-4 py-4 overflow-y-auto">
+          <div className="flex items-center justify-between mb-4 pl-4">
             <h3 className="font-bold text-lg">Folders</h3>
-            <button className="cartoon-btn cartoon-btn-primary p-1" title="Add Folder" onClick={() => handleAddFolder('New Folder')}>
-              <Icons.Plus size={18} />
-            </button>
+            {!showMainAddFolderForm ? (
+              <button className="cartoon-btn cartoon-btn-primary p-1" title="Add Folder" onClick={() => setShowMainAddFolderForm(true)}>
+                <Icons.Plus size={18} />
+              </button>
+            ) : (
+              <div className="flex items-center gap-1">
+                <button className="cartoon-btn px-1 py-1" title="Cancel" onClick={handleMainAddFolderCancel}>
+                  <Icons.X size={14} />
+                </button>
+              </div>
+            )}
           </div>
-          <FolderTree 
-            folders={folders}
-            selectedFolder={selectedFolder}
-            onSelectFolder={setSelectedFolder}
-            onAddFolder={handleAddFolder}
-            onDeleteFolder={handleDeleteFolder}
-            onRenameFolder={handleRenameFolder}
-            onMoveEntry={handleMoveEntry}
-          />
+          {showMainAddFolderForm && (
+            <form onSubmit={handleMainAddFolder} className="mb-4 mx-4 p-3 bg-gray-50 border border-gray-200 rounded">
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  placeholder="Folder name"
+                  value={mainNewFolderName}
+                  onChange={(e) => setMainNewFolderName(e.target.value)}
+                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded bg-white text-gray-900 focus:border-gray-500 focus:outline-none"
+                  autoFocus
+                />
+                <div className="flex gap-1">
+                  <button 
+                    type="submit" 
+                    className="flex-1 px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                    disabled={!mainNewFolderName.trim()}
+                  >
+                    Add
+                  </button>
+                  <button 
+                    type="button" 
+                    className="flex-1 px-2 py-1 text-xs bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+                    onClick={handleMainAddFolderCancel}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+          <div className="pl-4">
+            <FolderTree 
+              folders={folders}
+              selectedFolder={selectedFolder}
+              onSelectFolder={setSelectedFolder}
+              onAddFolder={handleAddFolder}
+              onDeleteFolder={handleDeleteFolder}
+              onRenameFolder={handleRenameFolder}
+              onMoveEntry={handleMoveEntry}
+              onMoveFolder={handleMoveFolder}
+            />
+          </div>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col items-center px-4 pt-4 pb-6 overflow-y-auto">
+        <main className="flex-1 flex flex-col items-center px-4 md:px-8 pt-4 pb-6 overflow-hidden max-w-5xl mx-auto">
           {/* Mobile Folder Accordion */}
           <div className="md:hidden w-full mb-4">
             <div className="cartoon-border bg-white">
@@ -413,68 +545,73 @@ function Dashboard() {
                     onDeleteFolder={handleDeleteFolder}
                     onRenameFolder={handleRenameFolder}
                     onMoveEntry={handleMoveEntry}
+                    onMoveFolder={handleMoveFolder}
                   />
                 </div>
               )}
             </div>
           </div>
 
-          {/* Search Bar */}
-          <SearchBar 
-            passwords={showSharedItems ? sharedPasswords : (selectedFolder === 'root' ? passwords : passwords.filter(p => p.folder_id === selectedFolder))}
-            onFilteredResults={handleSearchResults}
-            placeholder={showSharedItems ? "Search shared items..." : "Search passwords..."}
-          />
-          
-          <div className="w-full max-w-2xl flex flex-col items-center text-center md:flex-row md:justify-between md:text-left mb-6">
-            <div className="mb-4 md:mb-0">
-              <h2 className="text-xl font-bold">{listTitle}</h2>
-              <span className="text-black/50">({filteredPasswords.length})</span>
-            </div>
-            <div className="flex flex-col md:flex-row gap-2 items-center">
-              <div className="flex flex-wrap gap-2">
-                  <button className="cartoon-btn cartoon-btn-primary flex items-center gap-1" onClick={() => setAddModalOpen(true)}>
-                    <Icons.Plus size={16} />
-                    <span>Add Entry</span>
-                  </button>
-                  <button 
-                    className={`cartoon-btn flex items-center gap-1 ${showSharedItems ? 'cartoon-btn-primary' : ''}`} 
-                    onClick={() => setShowSharedItems(!showSharedItems)}
-                  >
-                    <Icons.Share size={16} />
-                    <span>{showSharedItems ? 'My Items' : 'Shared Items'}</span>
-                  </button>
-                  {!showSharedItems && (
-                    <>
-                      <button 
-                        className="cartoon-btn flex items-center gap-1" 
-                        onClick={handleExportCSV}
-                        title="Export passwords to CSV"
-                      >
-                        <Icons.Download size={16} />
-                        <span>Export CSV</span>
-                      </button>
-                      <button 
-                        className="cartoon-btn flex items-center gap-1" 
-                        onClick={triggerFileInput}
-                        title="Import passwords from CSV"
-                      >
-                        <Icons.Upload size={16} />
-                        <span>Import CSV</span>
-                      </button>
-                      <input
-                        id="csv-import-input"
-                        type="file"
-                        accept=".csv"
-                        onChange={handleImportCSV}
-                        style={{ display: 'none' }}
-                      />
-                    </>
-                  )}
+          {/* Sticky Header Section */}
+          <div className="w-full sticky top-0 bg-white z-10 pb-4">
+            {/* Search Bar */}
+            <SearchBar 
+              passwords={showSharedItems ? sharedPasswords : (selectedFolder === 'root' ? passwords : passwords.filter(p => p.folder_id === selectedFolder))}
+              onFilteredResults={handleSearchResults}
+              placeholder={showSharedItems ? "Search shared items..." : "Search passwords..."}
+            />
+            
+            <div className="w-full mb-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold">{listTitle} <span className="text-black/50">({filteredPasswords.length})</span></h2>
+              </div>
+              <div className="flex flex-col md:flex-row gap-2 items-center md:items-start">
+                <div className="flex flex-wrap gap-2">
+                    <button className="cartoon-btn cartoon-btn-primary flex items-center gap-1" onClick={() => setAddModalOpen(true)}>
+                      <Icons.Plus size={16} />
+                      <span>Add Entry</span>
+                    </button>
+                    <button 
+                      className={`cartoon-btn flex items-center gap-1 ${showSharedItems ? 'cartoon-btn-primary' : ''}`} 
+                      onClick={() => setShowSharedItems(!showSharedItems)}
+                    >
+                      <Icons.Share size={16} />
+                      <span>{showSharedItems ? 'My Items' : 'Shared Items'}</span>
+                    </button>
+                    {!showSharedItems && (
+                      <>
+                        <button 
+                          className="cartoon-btn flex items-center gap-1" 
+                          onClick={handleExportCSV}
+                          title="Export passwords to CSV"
+                        >
+                          <Icons.Download size={16} />
+                          <span>Export CSV</span>
+                        </button>
+                        <button 
+                          className="cartoon-btn flex items-center gap-1" 
+                          onClick={triggerFileInput}
+                          title="Import passwords from CSV"
+                        >
+                          <Icons.Upload size={16} />
+                          <span>Import CSV</span>
+                        </button>
+                        <input
+                          id="csv-import-input"
+                          type="file"
+                          accept=".csv"
+                          onChange={handleImportCSV}
+                          style={{ display: 'none' }}
+                        />
+                      </>
+                    )}
+                </div>
               </div>
             </div>
           </div>
-          <div className="w-full max-w-2xl">
+          
+          {/* Scrollable Password List */}
+          <div className="w-full flex-1 overflow-y-auto">
             {filteredPasswords.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <Icons.Lock size={48} className="mb-4" />
@@ -499,7 +636,7 @@ function Dashboard() {
                     notes={password.notes}
                     otp_secret={password.otp_secret}
                     attachments={password.attachments}
-                    folderId={password.folderId}
+                    folderId={password.folder_id}
                     onEdit={!showSharedItems ? handleEditEntry : null}
                     onDelete={!showSharedItems ? handleDeleteEntry : null}
                     onShare={!showSharedItems ? (id) => handleShareItem(id, 'password') : null}
@@ -547,6 +684,17 @@ function Dashboard() {
         onConfirm={handleConfirmExport}
         title="Export Passwords"
         message="You are about to export all your passwords to a CSV file. This file will contain sensitive information in plain text."
+      />
+      <DeleteFolderModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setFolderToDelete(null);
+        }}
+        onConfirm={handleConfirmDeleteFolder}
+        folder={folderToDelete}
+        folders={folders}
+        passwords={passwords}
       />
     </div>
   );

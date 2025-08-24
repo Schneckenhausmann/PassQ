@@ -4,12 +4,15 @@ import Login from './components/Login';
 import Registration from './components/Registration';
 import Dashboard from './components/Dashboard';
 import Logo from './components/Logo';
+import { Icons } from './components/Icons';
+import PasswordChangeModal from './components/PasswordChangeModal';
 import './App.css';
 
 function App() {
   const [showLogin, setShowLogin] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -42,7 +45,7 @@ function App() {
   if (isAuthenticated) {
     return (
       <Router>
-        <div className="min-h-screen bg-white text-black flex flex-col">
+        <div className="h-screen bg-white text-black flex flex-col">
           <header className="flex items-center justify-between px-4 py-3 md:px-8 md:py-4 border-b-4 border-black sticky top-0 z-50 bg-white">
             <div className="flex items-center gap-3">
               <Logo size={44} />
@@ -50,14 +53,25 @@ function App() {
             </div>
             <div className="flex items-center gap-3">
               <span className="uppercase text-xs md:text-sm">Welcome, {username}!</span>
+              <button 
+                className="cartoon-btn cartoon-shadow px-3 py-1 text-xs md:text-sm flex items-center gap-1" 
+                onClick={() => setIsSettingsModalOpen(true)}
+              >
+                <Icons.Settings size={14} />
+                <span>Change password</span>
+              </button>
               <button className="cartoon-btn cartoon-shadow px-3 py-1 text-xs md:text-sm" onClick={handleLogout}>
                 Logout
               </button>
             </div>
           </header>
-          <main className="flex-1 w-full max-w-5xl mx-auto px-2 md:px-6 py-4 md:py-8">
+          <main className="flex-1 w-full">
             <Dashboard />
           </main>
+          <PasswordChangeModal 
+            isOpen={isSettingsModalOpen} 
+            onClose={() => setIsSettingsModalOpen(false)} 
+          />
         </div>
       </Router>
     );

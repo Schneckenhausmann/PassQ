@@ -9,7 +9,6 @@ function PasswordItem({ id, website, username, password, notes, otp_secret, atta
   const [otpLoading, setOtpLoading] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [copyAnim, setCopyAnim] = useState(false);
 
   // Debug logging
   console.log('PasswordItem props:', { id, website, username, password: password ? '[REDACTED]' : 'UNDEFINED/NULL', passwordType: typeof password, passwordLength: password?.length });
@@ -27,8 +26,8 @@ function PasswordItem({ id, website, username, password, notes, otp_secret, atta
   const handleCopyPassword = () => {
     if (typeof password === 'string' && password.length > 0) {
       navigator.clipboard.writeText(password);
-      setCopyAnim(true);
-      setTimeout(() => setCopyAnim(false), 700);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     }
   };
 
@@ -106,13 +105,8 @@ function PasswordItem({ id, website, username, password, notes, otp_secret, atta
           <button className="cartoon-btn px-2 py-1" onClick={onToggleShowPassword} title={showPassword ? 'Hide password' : 'Show password'}>
             {showPassword ? <Icons.EyeOff size={16} /> : <Icons.Eye size={16} />}
           </button>
-          <button className={"cartoon-btn px-2 py-1 min-w-[36px] min-h-[36px] relative overflow-hidden flex items-center justify-center"} onClick={handleCopyPassword} title="Copy password">
-            <span className={copyAnim ? "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-float-up" : "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all"}>
-              <Icons.Copy size={16} />
-            </span>
-            <span className={copyAnim ? "absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-full animate-float-in" : "opacity-0"}>
-              <Icons.Copy size={16} />
-            </span>
+          <button className={`cartoon-btn px-2 py-1 transition-colors ${copied ? 'bg-green-500 text-white' : ''}`} onClick={handleCopyPassword} title="Copy password">
+            {copied ? <Icons.Check size={16} /> : <Icons.Copy size={16} />}
           </button>
         </div>
       </div>
@@ -126,21 +120,3 @@ function PasswordItem({ id, website, username, password, notes, otp_secret, atta
 }
 
 export default PasswordItem;
-
-/* Add to the bottom of the file (or in a CSS/JSX style block if using Tailwind's arbitrary values):
-@keyframes floatUp {
-  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  80% { transform: translate(-50%, -120%) scale(1.2); opacity: 1; }
-  100% { transform: translate(-50%, -200%) scale(0.8); opacity: 0; }
-}
-@keyframes floatIn {
-  0% { transform: translate(-50%, 100%) scale(0.8); opacity: 0; }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-}
-.animate-float-up {
-  animation: floatUp 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
-}
-.animate-float-in {
-  animation: floatIn 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
-}
-*/

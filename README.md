@@ -80,6 +80,10 @@ The application uses PostgreSQL with the following main tables:
 - ✅ **Data Portability**: Full backup and restore capabilities for user data migration
 
 ### UI/UX Improvements
+- ✅ **Advanced Layout System**: Eliminated page-level scrollbars with sticky header and independent scroll containers
+- ✅ **Sticky Navigation**: Search bar, folder title, and action buttons remain fixed during scroll
+- ✅ **Enhanced Sidebar**: Double-width left sidebar (512px) for improved folder navigation
+- ✅ **Professional Scrolling**: Clean, scrollbar-free interface with optimized scroll behavior
 - ✅ **Retro Cartoon Design System**: Implemented thick black borders and cartoon-style aesthetics
 - ✅ **Clean Theme**: Black and white design with selective accent colors for clarity
 - ✅ **Text Readability**: Bold typography with high contrast for optimal readability
@@ -98,13 +102,14 @@ The application uses PostgreSQL with the following main tables:
 - ⚠️ **Action Required**: Update environment variables with strong secrets before production deployment
 
 ## Environment Configuration
-Before running the application, ensure these environment variables are set with strong values:
+Before running the application, set up your environment variables:
 ```bash
-# Backend (.env)
-DATABASE_URL=postgresql://username:password@localhost/passq
-JWT_SECRET=your_very_secure_jwt_secret_here_minimum_32_chars
-ENCRYPTION_KEY=your_32_character_encryption_key_here
+# Copy the example environment files and customize them
+cp .env.example .env
+cp backend/.env.example backend/.env
 
-# Docker Compose
-POSTGRES_PASSWORD=your_secure_database_password
+# Edit the .env files with your secure values:
+# - Generate a strong JWT_SECRET (minimum 32 characters)
+# - Generate a secure ENCRYPTION_KEY (exactly 32 characters)
+# - Set a strong POSTGRES_PASSWORD
 ```

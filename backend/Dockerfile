@@ -28,9 +28,10 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y libpq5 && rm -rf /var/lib/apt/lists/*
 
 # Set env vars
-ENV DATABASE_URL=postgres://passq:securepassword@db:5432/passq \
-    JWT_SECRET=your_very_secure_jwt_secret_here \
-    ENCRYPTION_KEY=0123456789abcdef0123456789abcdef
+# Environment variables should be set via docker-compose.yml or runtime
+# ENV DATABASE_URL=postgres://passq:password@127.0.0.1:5432/passq \
+#     JWT_SECRET=your_jwt_secret \
+#     ENCRYPTION_KEY=your_encryption_key
 
 # Copy the stripped binary and migrations
 COPY --from=builder /app/target/release/backend /usr/local/bin/passq

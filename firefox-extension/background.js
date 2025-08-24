@@ -1,171 +1,219 @@
-// Background script for PassQ Firefox Extension
+// PassQ Firefox Extension Background Script
 
-// Extension state
-let isLoggedIn = false;
-let passqApiUrl = 'http://localhost:8080'; // Backend API URL
-let passwords = [];
-
-// Listen for messages from content scripts and popup
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  switch (message.type) {
-    case 'GET_LOGIN_STATUS':
-      sendResponse({ isLoggedIn });
-      break;
-      
-    case 'LOGIN':
-      handleLogin(message.credentials)
-        .then(result => sendResponse(result))
-        .catch(error => sendResponse({ success: false, error: error.message }));
-      return true; // Keep message channel open for async response
-      
-    case 'LOGOUT':
-      handleLogout();
-      sendResponse({ success: true });
-      break;
-      
-    case 'GET_PASSWORDS':
-      if (isLoggedIn) {
-        fetchPasswords()
-          .then(result => sendResponse(result))
-          .catch(error => sendResponse({ success: false, error: error.message }));
-      } else {
-        sendResponse({ success: false, error: 'Not logged in' });
-      }
-      return true;
-      
-    case 'FIND_CREDENTIALS':
-      if (isLoggedIn) {
-        const credentials = findCredentialsForDomain(message.domain);
-        sendResponse({ success: true, credentials });
-      } else {
-        sendResponse({ success: false, error: 'Not logged in' });
-      }
-      break;
-      
-    case 'AUTOFILL_CREDENTIALS':
-      if (isLoggedIn && message.credentials) {
-        // Send credentials to content script for autofill
-        browser.tabs.sendMessage(sender.tab.id, {
-          type: 'FILL_CREDENTIALS',
-          credentials: message.credentials
-        });
-        sendResponse({ success: true });
-      } else {
-        sendResponse({ success: false, error: 'Invalid request' });
-      }
-      break;
-      
-    default:
-      sendResponse({ success: false, error: 'Unknown message type' });
+class PassQBackground {
+  constructor() {
+    this.apiUrl = null;
+    this.authToken = null;
+    this.init();
   }
-});
 
-// Handle login to PassQ backend
-async function handleLogin(credentials) {
-  try {
-    const response = await fetch(`${passqApiUrl}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials)
+  async init() {
+    await this.loadConfig();
+    this.setupMessageListeners();
+  }
+
+  async loadConfig() {
+    try {
+      const result = await browser.storage.local.get(['passqServerUrl', 'authToken']);
+      this.apiUrl = result.passqServerUrl;
+      this.authToken = result.authToken;
+    } catch (error) {
+      console.error('Error loading config:', error);
+    }
+  }
+
+  setupMessageListeners() {
+    browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      this.handleMessage(message, sender, sendResponse);
+      return true; // Keep the message channel open for async response
     });
-    
-    if (response.ok) {
-      const data = await response.json();
-      isLoggedIn = true;
+
+    // Listen for storage changes to update config
+    browser.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === 'local') {
+        if (changes.passqServerUrl) {
+          this.apiUrl = changes.passqServerUrl.newValue;
+        }
+        if (changes.authToken) {
+          this.authToken = changes.authToken.newValue;
+        }
+      }
+    });
+  }
+
+  async handleMessage(message, sender, sendResponse) {
+    try {
+      switch (message.action) {
+        case 'checkLoginStatus':
+          await this.handleCheckLoginStatus(sendResponse);
+          break;
+        case 'login':
+          await this.handleLogin(message, sendResponse);
+          break;
+        case 'logout':
+          await this.handleLogout(sendResponse);
+          break;
+        case 'getPasswords':
+          await this.handleGetPasswords(sendResponse);
+          break;
+        case 'findCredentials':
+          await this.handleFindCredentials(message, sendResponse);
+          break;
+        case 'autofillCredentials':
+          await this.handleAutofillCredentials(message, sender, sendResponse);
+          break;
+        default:
+          sendResponse({ success: false, error: 'Unknown action' });
+      }
+    } catch (error) {
+      console.error('Error handling message:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+  }
+
+  async handleCheckLoginStatus(sendResponse) {
+    try {
+      await this.loadConfig();
+      const isLoggedIn = !!(this.authToken && this.apiUrl);
+      sendResponse({ success: true, isLoggedIn });
+    } catch (error) {
+      sendResponse({ success: false, error: error.message });
+    }
+  }
+
+  async handleLogin(message, sendResponse) {
+    try {
+      if (!this.apiUrl) {
+        sendResponse({ success: false, error: 'Server URL not configured' });
+        return;
+      }
+
+      const response = await fetch(`${this.apiUrl}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: message.username,
+          password: message.password
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        this.authToken = data.data; // Backend returns token in 'data' field
+        await browser.storage.local.set({ authToken: data.data });
+        sendResponse({ success: true, token: data.data });
+      } else {
+        const error = await response.json();
+        sendResponse({ success: false, error: error.message || 'Login failed' });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      sendResponse({ success: false, error: 'Connection failed' });
+    }
+  }
+
+  async handleLogout(sendResponse) {
+    try {
+      this.authToken = null;
+      await browser.storage.local.remove(['authToken']);
+      sendResponse({ success: true });
+    } catch (error) {
+      sendResponse({ success: false, error: error.message });
+    }
+  }
+
+  async handleGetPasswords(sendResponse) {
+    try {
+      if (!this.authToken || !this.apiUrl) {
+        sendResponse({ success: false, error: 'Not authenticated or server not configured' });
+        return;
+      }
+
+      const response = await fetch(`${this.apiUrl}/passwords`, {
+        headers: {
+          'Authorization': `Bearer ${this.authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        sendResponse({ success: true, passwords: result.data }); // Backend returns passwords in 'data' field
+      } else if (response.status === 401) {
+        // Token expired, clear it
+        this.authToken = null;
+        await browser.storage.local.remove(['authToken']);
+        sendResponse({ success: false, error: 'Authentication expired' });
+      } else {
+        sendResponse({ success: false, error: 'Failed to fetch passwords' });
+      }
+    } catch (error) {
+      console.error('Get passwords error:', error);
+      sendResponse({ success: false, error: 'Connection failed' });
+    }
+  }
+
+  async handleFindCredentials(message, sendResponse) {
+    try {
+      if (!this.authToken || !this.apiUrl) {
+        sendResponse({ success: false, error: 'Not authenticated or server not configured' });
+        return;
+      }
+
+      const response = await fetch(`${this.apiUrl}/passwords`, {
+        headers: {
+          'Authorization': `Bearer ${this.authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const passwords = result.data; // Backend returns passwords in 'data' field
+        const domain = message.domain;
+        
+        const matchingCredentials = passwords.filter(cred => {
+          const credDomain = this.extractDomain(cred.website || '');
+          return credDomain.includes(domain) || domain.includes(credDomain);
+        });
+
+        sendResponse({ success: true, credentials: matchingCredentials });
+      } else {
+        sendResponse({ success: false, error: 'Failed to fetch credentials' });
+      }
+    } catch (error) {
+      console.error('Find credentials error:', error);
+      sendResponse({ success: false, error: 'Connection failed' });
+    }
+  }
+
+  async handleAutofillCredentials(message, sender, sendResponse) {
+    try {
+      const tabId = sender.tab.id;
       
-      // Store auth token securely
-      await browser.storage.local.set({
-        authToken: data.token,
-        isLoggedIn: true
+      await browser.tabs.sendMessage(tabId, {
+        action: 'autofill',
+        credential: message.credential
       });
       
-      // Fetch initial passwords
-      await fetchPasswords();
-      
-      return { success: true };
-    } else {
-      throw new Error('Login failed');
-    }
-  } catch (error) {
-    console.error('Login error:', error);
-    throw error;
-  }
-}
-
-// Handle logout
-async function handleLogout() {
-  isLoggedIn = false;
-  passwords = [];
-  
-  // Clear stored data
-  await browser.storage.local.clear();
-}
-
-// Fetch passwords from PassQ backend
-async function fetchPasswords() {
-  try {
-    const storage = await browser.storage.local.get(['authToken']);
-    if (!storage.authToken) {
-      throw new Error('No auth token');
-    }
-    
-    const response = await fetch(`${passqApiUrl}/passwords`, {
-      headers: {
-        'Authorization': `Bearer ${storage.authToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      passwords = data.passwords || [];
-      return { success: true, passwords };
-    } else {
-      throw new Error('Failed to fetch passwords');
-    }
-  } catch (error) {
-    console.error('Fetch passwords error:', error);
-    throw error;
-  }
-}
-
-// Find credentials for a specific domain
-function findCredentialsForDomain(domain) {
-  if (!domain || !passwords.length) {
-    return [];
-  }
-  
-  // Clean domain (remove www, protocols, etc.)
-  const cleanDomain = domain.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
-  
-  return passwords.filter(password => {
-    const passwordDomain = password.website.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
-    return passwordDomain.includes(cleanDomain) || cleanDomain.includes(passwordDomain);
-  });
-}
-
-// Initialize extension on startup
-browser.runtime.onStartup.addListener(async () => {
-  const storage = await browser.storage.local.get(['isLoggedIn', 'authToken']);
-  if (storage.isLoggedIn && storage.authToken) {
-    isLoggedIn = true;
-    try {
-      await fetchPasswords();
+      sendResponse({ success: true });
     } catch (error) {
-      console.error('Failed to restore session:', error);
-      await handleLogout();
+      console.error('Autofill error:', error);
+      sendResponse({ success: false, error: 'Autofill failed' });
     }
   }
-});
 
-// Handle extension installation
-browser.runtime.onInstalled.addListener((details) => {
-  if (details.reason === 'install') {
-    // Open PassQ welcome page
-    browser.tabs.create({
-      url: 'http://localhost:80'
-    });
+  extractDomain(website) {
+    try {
+      const url = new URL(website.startsWith('http') ? website : `https://${website}`);
+      return url.hostname;
+    } catch {
+      return website;
+    }
   }
-});
+}
+
+// Initialize background script
+new PassQBackground();

@@ -95,7 +95,7 @@ function SearchBar({ passwords, onFilteredResults, placeholder = "Search passwor
   };
   
   return (
-    <div className="w-full max-w-2xl mb-6">
+    <div className="w-full max-w-4xl mb-6">
       <div className="relative">
         <div className={`cartoon-border cartoon-shadow bg-white transition-all duration-200 ${
           isFocused ? 'shadow-lg' : ''

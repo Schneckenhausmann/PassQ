@@ -115,7 +115,7 @@ pub struct NewFolder {
 #[derive(Deserialize)]
 pub struct FolderRequest {
     pub parent_folder_id: Option<Uuid>,
-    pub name: String,
+    pub name: Option<String>,
 }
 
 // Share models

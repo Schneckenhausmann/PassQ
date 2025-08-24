@@ -33,13 +33,17 @@ User registration component with comprehensive form handling.
 - Axios integration for backend registration
 
 ### Dashboard.js
-Main dashboard component displaying password management interface.
+Main dashboard component displaying password management interface with optimized layout.
+- **Advanced Layout Architecture**: Implements sticky header with scrollable content areas for optimal UX
+- **Responsive Sidebar**: Double-width left sidebar (512px) for better folder navigation
+- **Sticky Header Section**: Search bar, folder title, and action buttons remain fixed during scroll
+- **Scrollable Password List**: Independent scroll container for password entries only
+- **Page-level Scrollbar Elimination**: Clean layout without browser-level scrolling
 - Full API integration for real-time data management
 - Integration with multiple child components (PasswordItem, FolderTree, ShareModal, SearchBar, AddEntryModal, EditEntryModal)
 - State management for sharing functionality and search operations
 - Complete CRUD operations for passwords and folders
 - CSV import/export functionality with download and file upload capabilities
-- Basic component structure with conditional rendering
 
 ### PasswordItem.js
 Component for displaying individual password entries with favicon.
@@ -202,6 +206,39 @@ Uses React's built-in useState hook for local component state:
 - Generic error messages for users
 - 401 Unauthorized responses handled for invalid/expired tokens
 
+## Layout Architecture
+
+### Advanced Scrolling System
+The application implements a sophisticated layout system that eliminates page-level scrollbars while maintaining optimal user experience:
+
+**Key Layout Features:**
+- **No Page-level Scrollbar**: Root-level overflow is controlled via CSS `overflow: hidden` on html, body, and #root
+- **Sticky Header Design**: Search bar, folder title, and action buttons remain fixed at the top during navigation
+- **Independent Scroll Containers**: Only the password list scrolls within its dedicated container
+- **Responsive Sidebar**: Left sidebar is double-width (512px) for enhanced folder navigation
+- **Flexible Height Management**: Uses `h-screen` and `calc()` for precise viewport height calculations
+
+**CSS Architecture for Layout:**
+```css
+/* Root-level scrollbar elimination */
+html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+
+/* Dashboard height calculation */
+.dashboard-container { height: calc(100vh - 56px); }
+
+/* Sticky header positioning */
+.sticky-header { position: sticky; top: 0; z-index: 10; }
+
+/* Scrollable content area */
+.password-list-container { flex: 1; overflow-y: auto; }
+```
+
+**Benefits:**
+- Clean, professional appearance without browser scrollbars
+- Improved navigation with always-visible controls
+- Better mobile experience with contained scrolling
+- Enhanced performance with optimized scroll handling
+
 ## Styling
 
 ### Retro Cartoon Design System
@@ -300,6 +337,14 @@ Dashboard.js
 
 ## UI/UX Improvements (Recently Implemented)
 
+### Layout Optimization (Latest)
+- **Page-level Scrollbar Elimination**: Completely removed browser-level scrollbars for cleaner appearance
+- **Sticky Header Implementation**: Search bar, folder title, and action buttons remain fixed during scroll
+- **Independent Scroll Containers**: Password list scrolls independently within its dedicated container
+- **Enhanced Sidebar**: Double-width left sidebar (512px) for improved folder navigation
+- **Responsive Layout Architecture**: Optimized layout structure for all screen sizes
+- **CSS Overflow Management**: Root-level overflow control for precise scroll behavior
+
 ### Modern Design Implementation
 - **Liquid Glass Design**: Implemented glassmorphism effects throughout the application
 - **Light Theme**: Migrated from dark theme to modern light theme with better accessibility
@@ -314,6 +359,7 @@ Dashboard.js
 - **Visual Hierarchy**: Improved content organization with modern spacing and typography
 - **Accessibility**: Enhanced contrast ratios and focus indicators
 - **Cross-browser Compatibility**: Optimized styling for modern browsers
+- **Professional Layout**: Clean, scrollbar-free interface with optimized navigation
 
 ## Future Enhancements
 

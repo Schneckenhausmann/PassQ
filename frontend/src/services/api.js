@@ -36,6 +36,7 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (userData) => api.post('/register', userData),
   login: (credentials) => api.post('/login', credentials),
+  changePassword: (passwordData) => api.put('/change-password', passwordData),
 };
 
 // Password API
@@ -60,6 +61,7 @@ export const shareAPI = {
 export const folderAPI = {
   getAll: () => api.get('/folders'),
   create: (folderData) => api.post('/folders', folderData),
+  update: (id, folderData) => api.put(`/folders/${id}`, folderData),
   delete: (id) => api.delete(`/folders/${id}`),
   share: (id, shareData) => api.post(`/folders/${id}/share`, shareData),
 };

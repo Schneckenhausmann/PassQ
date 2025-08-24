@@ -11,29 +11,43 @@ class PassQAutofill {
 
   async init() {
     // Check if user is logged in
-    const response = await browser.runtime.sendMessage({ type: 'GET_LOGIN_STATUS' });
-    this.isActive = response.isLoggedIn;
+    try {
+      const response = await browser.runtime.sendMessage({ action: 'checkLoginStatus' });
+      this.isActive = response.success && response.isLoggedIn;
+    } catch (error) {
+      console.error('Error checking login status:', error);
+      this.isActive = false;
+    }
 
     if (this.isActive) {
       this.setupAutofill();
     }
 
-    // Listen for messages from background script
+    // Listen for messages from background script and popup
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      switch (message.type) {
-        case 'FILL_CREDENTIALS':
-          this.fillCredentials(message.credentials);
-          break;
-        case 'LOGIN_STATUS_CHANGED':
-          this.isActive = message.isLoggedIn;
-          if (this.isActive) {
-            this.setupAutofill();
-          } else {
-            this.cleanup();
-          }
-          break;
-      }
+      this.handleMessage(message, sender, sendResponse);
+      return true;
     });
+  }
+
+  handleMessage(message, sender, sendResponse) {
+    switch (message.action) {
+      case 'autofill':
+        this.fillCredentials(message.credential);
+        sendResponse({ success: true });
+        break;
+      case 'loginStatusChanged':
+        this.isActive = message.isLoggedIn;
+        if (this.isActive) {
+          this.setupAutofill();
+        } else {
+          this.cleanup();
+        }
+        sendResponse({ success: true });
+        break;
+      default:
+        sendResponse({ success: false, error: 'Unknown action' });
+    }
   }
 
   setupAutofill() {
@@ -106,283 +120,352 @@ class PassQAutofill {
   }
 
   isBeforePassword(usernameField, passwordField) {
-    const usernameRect = usernameField.getBoundingClientRect();
-    const passwordRect = passwordField.getBoundingClientRect();
-    
-    // Check if username field comes before password field (vertically or horizontally)
-    return usernameRect.top <= passwordRect.top || 
-           (usernameRect.top === passwordRect.top && usernameRect.left < passwordRect.left);
+    // Check if username field comes before password field in DOM
+    const position = usernameField.compareDocumentPosition(passwordField);
+    return position & Node.DOCUMENT_POSITION_FOLLOWING;
   }
 
   addAutofillButton(usernameField, passwordField) {
-    // Create autofill button
+    // Create PassQ autofill button
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'passq-autofill-btn';
-    button.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-        <circle cx="12" cy="16" r="1" stroke="currentColor" stroke-width="2"/>
-        <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11" stroke="currentColor" stroke-width="2"/>
-      </svg>
-    `;
+    button.innerHTML = '🔑';
     button.title = 'Fill with PassQ';
+    button.style.cssText = `
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 10000;
+      display: none;
+    `;
+
+    // Position button relative to username field
+    usernameField.style.position = 'relative';
+    usernameField.parentElement.style.position = 'relative';
+    usernameField.parentElement.appendChild(button);
+
+    // Show button on field focus
+    const showButton = () => {
+      button.style.display = 'block';
+      this.positionAutofillButton(button, usernameField);
+    };
     
-    // Position button
-    this.positionAutofillButton(button, usernameField);
-    
-    // Add click handler
-    button.addEventListener('click', (e) => {
+    const hideButton = () => {
+      setTimeout(() => {
+        if (!button.matches(':hover')) {
+          button.style.display = 'none';
+        }
+      }, 200);
+    };
+
+    usernameField.addEventListener('focus', showButton);
+    usernameField.addEventListener('blur', hideButton);
+    passwordField.addEventListener('focus', showButton);
+    passwordField.addEventListener('blur', hideButton);
+
+    // Handle button click
+    button.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      this.showCredentialSelector(usernameField, passwordField);
+      await this.showCredentialSelector(usernameField, passwordField);
     });
-    
-    document.body.appendChild(button);
-    
-    // Store reference for cleanup
-    usernameField.passqButton = button;
   }
 
   positionAutofillButton(button, field) {
     const rect = field.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-    
-    button.style.position = 'absolute';
-    button.style.top = (rect.top + scrollTop + (rect.height - 20) / 2) + 'px';
-    button.style.left = (rect.right + scrollLeft - 25) + 'px';
-    button.style.zIndex = '10000';
+    button.style.right = '8px';
+    button.style.top = '50%';
   }
 
   async onFieldFocus(usernameField, passwordField) {
-    // Get credentials for current domain
+    if (!this.isActive) return;
+
+    // Get current domain
     const domain = window.location.hostname;
-    const response = await browser.runtime.sendMessage({
-      type: 'FIND_CREDENTIALS',
-      domain: domain
-    });
     
-    if (response.success && response.credentials.length > 0) {
-      this.credentials = response.credentials;
-      
-      // Show subtle indication that autofill is available
-      if (usernameField.passqButton) {
-        usernameField.passqButton.classList.add('passq-available');
+    try {
+      // Find credentials for current domain
+      const response = await browser.runtime.sendMessage({
+        action: 'findCredentials',
+        domain: domain
+      });
+
+      if (response.success && response.credentials.length > 0) {
+        this.credentials = response.credentials;
+        // Auto-fill if only one credential
+        if (response.credentials.length === 1) {
+          this.fillCredentials(response.credentials[0]);
+        }
       }
+    } catch (error) {
+      console.error('Error finding credentials:', error);
     }
   }
 
   async showCredentialSelector(usernameField, passwordField) {
-    if (this.credentials.length === 0) {
-      // No credentials found, show message
-      this.showMessage('No credentials found for this site');
-      return;
-    }
+    if (!this.isActive) return;
+
+    const domain = window.location.hostname;
     
-    if (this.credentials.length === 1) {
-      // Auto-fill single credential
-      this.fillCredentials(this.credentials[0]);
-      return;
+    try {
+      const response = await browser.runtime.sendMessage({
+        action: 'findCredentials',
+        domain: domain
+      });
+
+      if (response.success && response.credentials.length > 0) {
+        this.credentials = response.credentials;
+        this.showCredentialOverlay(usernameField, passwordField);
+      } else {
+        this.showMessage('No credentials found for this site');
+      }
+    } catch (error) {
+      console.error('Error finding credentials:', error);
+      this.showMessage('Error loading credentials');
     }
-    
-    // Show credential selector overlay
-    this.showCredentialOverlay(usernameField, passwordField);
   }
 
   showCredentialOverlay(usernameField, passwordField) {
     // Remove existing overlay
     this.hideCredentialOverlay();
-    
+
     const overlay = document.createElement('div');
     overlay.className = 'passq-credential-overlay';
-    overlay.innerHTML = `
-      <div class="passq-overlay-header">
-        <span>Choose account for ${window.location.hostname}</span>
-        <button class="passq-close-btn" type="button">×</button>
-      </div>
-      <div class="passq-credential-list">
-        ${this.credentials.map((cred, index) => `
-          <div class="passq-credential-item" data-index="${index}">
-            <div class="passq-credential-info">
-              <div class="passq-credential-website">${cred.website}</div>
-              <div class="passq-credential-username">${cred.username}</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
+    overlay.style.cssText = `
+      position: fixed;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      z-index: 10001;
+      max-width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
     `;
-    
-    // Position overlay
+
+    // Position overlay near the username field
     const rect = usernameField.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-    
-    overlay.style.position = 'absolute';
-    overlay.style.top = (rect.bottom + scrollTop + 5) + 'px';
-    overlay.style.left = (rect.left + scrollLeft) + 'px';
-    overlay.style.zIndex = '10001';
-    
-    document.body.appendChild(overlay);
-    this.currentOverlay = overlay;
-    
-    // Add event listeners
-    overlay.querySelector('.passq-close-btn').addEventListener('click', () => {
-      this.hideCredentialOverlay();
-    });
-    
-    overlay.querySelectorAll('.passq-credential-item').forEach((item, index) => {
+    overlay.style.left = `${rect.left}px`;
+    overlay.style.top = `${rect.bottom + 5}px`;
+
+    // Create credential list
+    this.credentials.forEach((credential, index) => {
+      const item = document.createElement('div');
+      item.className = 'passq-credential-item';
+      item.style.cssText = `
+        padding: 12px;
+        border-bottom: 1px solid #f3f4f6;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      `;
+
+      const title = document.createElement('div');
+      title.style.cssText = 'font-weight: 500; color: #1f2937;';
+      title.textContent = credential.title || this.extractDomain(credential.website || '');
+
+      const username = document.createElement('div');
+      username.style.cssText = 'font-size: 14px; color: #6b7280;';
+      username.textContent = credential.username || '';
+
+      item.appendChild(title);
+      item.appendChild(username);
+
+      // Hover effects
+      item.addEventListener('mouseenter', () => {
+        item.style.backgroundColor = '#f9fafb';
+      });
+      
+      item.addEventListener('mouseleave', () => {
+        item.style.backgroundColor = 'transparent';
+      });
+
+      // Click handler
       item.addEventListener('click', () => {
-        this.fillCredentials(this.credentials[index]);
+        this.fillCredentials(credential);
         this.hideCredentialOverlay();
       });
+
+      overlay.appendChild(item);
     });
-    
-    // Close on outside click
+
+    document.body.appendChild(overlay);
+    this.overlayVisible = true;
+
+    // Close overlay when clicking outside
     setTimeout(() => {
       document.addEventListener('click', this.handleOutsideClick.bind(this));
     }, 100);
   }
 
   hideCredentialOverlay() {
-    if (this.currentOverlay) {
-      this.currentOverlay.remove();
-      this.currentOverlay = null;
+    const overlay = document.querySelector('.passq-credential-overlay');
+    if (overlay) {
+      overlay.remove();
+      this.overlayVisible = false;
       document.removeEventListener('click', this.handleOutsideClick.bind(this));
     }
   }
 
   handleOutsideClick(event) {
-    if (this.currentOverlay && !this.currentOverlay.contains(event.target)) {
+    if (!event.target.closest('.passq-credential-overlay') && !event.target.closest('.passq-autofill-btn')) {
       this.hideCredentialOverlay();
     }
   }
 
-  fillCredentials(credentials) {
-    // Find the form fields
+  fillCredentials(credential) {
+    // Find username and password fields
     const passwordFields = document.querySelectorAll('input[type="password"]');
     
-    for (const passwordField of passwordFields) {
+    passwordFields.forEach(passwordField => {
       const form = passwordField.closest('form') || passwordField.parentElement;
       const usernameField = this.findUsernameField(form, passwordField);
       
-      if (usernameField) {
-        // Fill username
-        this.fillField(usernameField, credentials.username);
-        
-        // Fill password
-        this.fillField(passwordField, credentials.password);
-        
-        // Show success message
-        this.showMessage('Credentials filled successfully');
-        
-        break; // Fill only the first matching form
+      if (usernameField && credential.username) {
+        this.fillField(usernameField, credential.username);
       }
-    }
+      
+      if (credential.password) {
+        this.fillField(passwordField, credential.password);
+      }
+    });
+
+    this.showMessage('Credentials filled successfully');
   }
 
   fillField(field, value) {
     // Set value
     field.value = value;
     
-    // Trigger events to ensure the page recognizes the change
-    const events = ['input', 'change', 'keyup', 'blur'];
+    // Trigger events to notify the page
+    const events = ['input', 'change', 'keyup'];
     events.forEach(eventType => {
       const event = new Event(eventType, { bubbles: true });
       field.dispatchEvent(event);
     });
+    
+    // Focus the field briefly to ensure it's recognized
+    field.focus();
+  }
+
+  extractDomain(website) {
+    try {
+      const url = new URL(website.startsWith('http') ? website : `https://${website}`);
+      return url.hostname;
+    } catch {
+      return website;
+    }
   }
 
   showMessage(text) {
     // Remove existing message
-    const existing = document.querySelector('.passq-message');
-    if (existing) existing.remove();
-    
+    const existingMessage = document.querySelector('.passq-message');
+    if (existingMessage) {
+      existingMessage.remove();
+    }
+
     const message = document.createElement('div');
     message.className = 'passq-message';
     message.textContent = text;
+    message.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 6px;
+      z-index: 10002;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    `;
+
     document.body.appendChild(message);
-    
+
     // Auto-remove after 3 seconds
     setTimeout(() => {
-      if (message.parentNode) {
+      if (message.parentElement) {
         message.remove();
       }
     }, 3000);
   }
 
   handleKeyboardShortcut(event) {
-    // Ctrl+Shift+P (or Cmd+Shift+P on Mac) to trigger autofill
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'P') {
+    // Ctrl+Shift+F (or Cmd+Shift+F on Mac) to trigger autofill
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'F') {
       event.preventDefault();
       
       // Find focused field or first password field
-      const activeElement = document.activeElement;
-      let targetField = null;
-      
-      if (activeElement && (activeElement.type === 'password' || activeElement.type === 'text' || activeElement.type === 'email')) {
-        targetField = activeElement;
-      } else {
+      let targetField = document.activeElement;
+      if (!targetField || (targetField.type !== 'password' && targetField.type !== 'text' && targetField.type !== 'email')) {
         targetField = document.querySelector('input[type="password"]');
       }
       
       if (targetField) {
         const form = targetField.closest('form') || targetField.parentElement;
-        const passwordField = targetField.type === 'password' ? targetField : form.querySelector('input[type="password"]');
+        const passwordField = form.querySelector('input[type="password"]');
         const usernameField = this.findUsernameField(form, passwordField);
         
         if (usernameField && passwordField) {
-          this.onFieldFocus(usernameField, passwordField).then(() => {
-            this.showCredentialSelector(usernameField, passwordField);
-          });
+          this.showCredentialSelector(usernameField, passwordField);
         }
       }
     }
   }
 
   setupMutationObserver() {
+    // Watch for dynamically added forms
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            // Check if new password fields were added
-            const passwordFields = node.querySelectorAll ? node.querySelectorAll('input[type="password"]') : [];
-            if (passwordFields.length > 0 || (node.type === 'password')) {
+            // Check if the added node contains password fields
+            const passwordFields = node.querySelectorAll ? 
+              node.querySelectorAll('input[type="password"]') : [];
+            
+            if (passwordFields.length > 0) {
+              // Process new forms
               setTimeout(() => this.findLoginForms(), 100);
             }
           }
         });
       });
     });
-    
+
     observer.observe(document.body, {
       childList: true,
       subtree: true
     });
-    
-    this.mutationObserver = observer;
   }
 
   cleanup() {
     // Remove all PassQ elements
-    document.querySelectorAll('.passq-autofill-btn, .passq-credential-overlay, .passq-message').forEach(el => el.remove());
+    const elements = document.querySelectorAll('.passq-autofill-btn, .passq-credential-overlay, .passq-message');
+    elements.forEach(el => el.remove());
     
     // Remove event listeners
     document.removeEventListener('keydown', this.handleKeyboardShortcut.bind(this));
+    document.removeEventListener('click', this.handleOutsideClick.bind(this));
     
-    // Disconnect mutation observer
-    if (this.mutationObserver) {
-      this.mutationObserver.disconnect();
-    }
-    
-    // Clear processed flags
-    document.querySelectorAll('[data-passq-processed]').forEach(el => {
-      el.removeAttribute('data-passq-processed');
-    });
+    // Reset state
+    this.isActive = false;
+    this.credentials = [];
+    this.overlayVisible = false;
   }
 }
 
-// Initialize autofill when page loads
+// Initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     new PassQAutofill();
