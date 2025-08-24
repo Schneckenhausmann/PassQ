@@ -611,40 +611,42 @@ function Dashboard() {
           </div>
           
           {/* Scrollable Password List */}
-          <div className="w-full flex-1 overflow-y-auto">
-            {filteredPasswords.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <Icons.Lock size={48} className="mb-4" />
-                <h4 className="text-lg font-semibold mb-2">{showSharedItems ? 'No shared items' : 'No entries in this folder'}</h4>
-                <p className="mb-4 text-black/60">{showSharedItems ? 'No items have been shared with you yet.' : 'Get started by adding your first password entry.'}</p>
-                {!showSharedItems && (
-                  <button className="cartoon-btn cartoon-btn-primary flex items-center gap-1" onClick={() => setAddModalOpen(true)}>
-                    <Icons.Plus size={16} />
-                    <span>Add your first entry</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {filteredPasswords.map(password => (
-                  <PasswordItem
-                    key={password.id}
-                    id={password.id}
-                    website={password.website}
-                    username={password.username}
-                    password={password.password}
-                    notes={password.notes}
-                    otp_secret={password.otp_secret}
-                    attachments={password.attachments}
-                    folderId={password.folder_id}
-                    onEdit={!showSharedItems ? handleEditEntry : null}
-                    onDelete={!showSharedItems ? handleDeleteEntry : null}
-                    onShare={!showSharedItems ? (id) => handleShareItem(id, 'password') : null}
-                    isShared={showSharedItems}
-                  />
-                ))}
-              </div>
-            )}
+          <div className="w-full flex-1 overflow-y-auto overflow-x-hidden pr-4 -mr-4">
+            <div className="pr-4">
+              {filteredPasswords.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <Icons.Lock size={48} className="mb-4" />
+                  <h4 className="text-lg font-semibold mb-2">{showSharedItems ? 'No shared items' : 'No entries in this folder'}</h4>
+                  <p className="mb-4 text-black/60">{showSharedItems ? 'No items have been shared with you yet.' : 'Get started by adding your first password entry.'}</p>
+                  {!showSharedItems && (
+                    <button className="cartoon-btn cartoon-btn-primary flex items-center gap-1" onClick={() => setAddModalOpen(true)}>
+                      <Icons.Plus size={16} />
+                      <span>Add your first entry</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {filteredPasswords.map(password => (
+                    <PasswordItem
+                      key={password.id}
+                      id={password.id}
+                      website={password.website}
+                      username={password.username}
+                      password={password.password}
+                      notes={password.notes}
+                      otp_secret={password.otp_secret}
+                      attachments={password.attachments}
+                      folderId={password.folder_id}
+                      onEdit={!showSharedItems ? handleEditEntry : null}
+                      onDelete={!showSharedItems ? handleDeleteEntry : null}
+                      onShare={!showSharedItems ? (id) => handleShareItem(id, 'password') : null}
+                      isShared={showSharedItems}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>
