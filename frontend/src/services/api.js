@@ -16,8 +16,13 @@ const makeRequest = async (endpoint, options = {}) => {
 
   // Handle auth errors
   if (response.status === 401) {
-    window.location.href = '/';
-    throw new Error('Unauthorized');
+    // Don't redirect immediately for OAuth accounts endpoint - let component handle it
+    if (!endpoint.includes('/auth/oauth/accounts')) {
+      window.location.href = '/';
+    }
+    const error = new Error('Unauthorized');
+    error.status = 401;
+    throw error;
   }
 
   if (!response.ok) {

@@ -1,12 +1,16 @@
-# Use latest stable Rust with slim Debian Bookworm
-FROM rust:slim-bookworm AS builder
+# Use specific Rust version with security patches
+FROM rust:1.82.0-slim-bookworm AS builder
 
-# Install PostgreSQL development libraries and build dependencies
+# Create non-root user
+RUN groupadd -r passq && useradd -r -g passq passq
+
+# Install only necessary packages and clean up
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     pkg-config \
     libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 WORKDIR /app
 
@@ -25,21 +29,24 @@ COPY . .
 # Build in release mode and strip symbols to reduce size
 RUN cargo build --release && strip target/release/backend
 
-# Final minimal image
-FROM debian:bookworm-slim
+# Final minimal image with specific version
+FROM debian:bookworm-20241202-slim
 
-# Install PostgreSQL runtime libraries
-RUN apt-get update && apt-get install -y libpq5 && rm -rf /var/lib/apt/lists/*
+# Create non-root user in final image
+RUN groupadd -r passq && useradd -r -g passq passq
 
-# Set env vars
-# Environment variables should be set via docker-compose.yml or runtime
-# ENV DATABASE_URL=postgres://passq:password@127.0.0.1:5432/passq \
-#     JWT_SECRET=your_jwt_secret \
-#     ENCRYPTION_KEY=your_encryption_key
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Copy the stripped binary and migrations
-COPY --from=builder /app/target/release/backend /usr/local/bin/passq
-COPY --from=builder /app/migrations /app/migrations
+# Copy binary and set ownership
+COPY --from=builder --chown=passq:passq /app/target/release/backend /usr/local/bin/passq
+COPY --from=builder --chown=passq:passq /app/migrations /app/migrations
+
+# Switch to non-root user
+USER passq
 
 EXPOSE 8080
 

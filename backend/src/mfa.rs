@@ -5,12 +5,14 @@ use uuid::Uuid;
 use log;
 
 /// Generates a TOTP secret for a user
+#[allow(dead_code)]
 pub fn generate_totp_secret(_user_id: Uuid) -> String {
     let secret = Secret::generate_secret(); // Not a Result, no expect
     secret.to_string()
 }
 
 /// Generates a QR code provisioning URL for the authenticator app
+#[allow(dead_code)]
 pub fn generate_qr_code_url(user_id: Uuid, secret: &str) -> String {
     let totp = TOTP::new(
         Algorithm::SHA1,

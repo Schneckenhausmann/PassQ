@@ -3,13 +3,13 @@
 
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:15.8-alpine
     environment:
       POSTGRES_USER: passq
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: passq
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"  # Bind to localhost only
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -17,11 +17,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
   
   backend:
     build: ./backend
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"  # Bind to localhost only
     environment:
       # DATABASE CONFIGURATION
       # Development: Uses sslmode=disable for local Docker networking
@@ -91,14 +96,26 @@ services:
         condition: service_healthy
       mailhog:
         condition: service_started
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "1001:1001"  # non-root user
     restart: unless-stopped
   
   frontend:
     build: ./frontend
     ports:
-      - "80:80"
+      - "127.0.0.1:80:80"  # Bind to localhost only
     depends_on:
       - backend
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
     restart: unless-stopped
 
   # DEVELOPMENT EMAIL SERVICE

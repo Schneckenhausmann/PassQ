@@ -4,12 +4,21 @@ use ring::aead;
 use ring::rand::{SecureRandom, SystemRandom};
 use std::env;
 use log;
+use crate::key_management::get_key_manager;
 
-/// Generates a random key for encryption
+/// Generates a random key for encryption using enterprise key management
+#[allow(dead_code)]
+pub async fn generate_key_async() -> Result<aead::LessSafeKey, String> {
+    let key_manager = get_key_manager()?;
+    log::info!("Using key provider: {}", key_manager.get_provider_info());
+    key_manager.get_encryption_key().await
+}
+
+/// Generates a random key for encryption (synchronous version for backward compatibility)
 pub fn generate_key() -> Result<aead::LessSafeKey, String> {
     let key_material = match env::var("ENCRYPTION_KEY") {
         Ok(key) => {
-            log::info!("Encryption key loaded successfully");
+            log::info!("Encryption key loaded successfully from environment");
             key
         }
         Err(_) => {
@@ -98,9 +107,25 @@ pub fn encrypt_password(password: &str) -> Result<Vec<u8>, String> {
     encrypt(password.as_bytes().to_vec(), &key)
 }
 
+/// Encrypts a password string (async version for enterprise key management)
+#[allow(dead_code)]
+pub async fn encrypt_password_async(password: &str) -> Result<Vec<u8>, String> {
+    let key = generate_key_async().await?;
+    encrypt(password.as_bytes().to_vec(), &key)
+}
+
 /// Decrypts a password from binary data
 pub fn decrypt_password(encrypted_password: &[u8]) -> Result<String, String> {
     let key = generate_key()?;
+    let decrypted_data = decrypt(encrypted_password.to_vec(), &key)?;
+    String::from_utf8(decrypted_data)
+        .map_err(|e| format!("Failed to convert decrypted data to string: {}", e))
+}
+
+/// Decrypts a password from binary data (async version for enterprise key management)
+#[allow(dead_code)]
+pub async fn decrypt_password_async(encrypted_password: &[u8]) -> Result<String, String> {
+    let key = generate_key_async().await?;
     let decrypted_data = decrypt(encrypted_password.to_vec(), &key)?;
     String::from_utf8(decrypted_data)
         .map_err(|e| format!("Failed to convert decrypted data to string: {}", e))
@@ -112,9 +137,25 @@ pub fn encrypt_metadata(metadata: &str) -> Result<Vec<u8>, String> {
     encrypt(metadata.as_bytes().to_vec(), &key)
 }
 
+/// Encrypts metadata (async version for enterprise key management)
+#[allow(dead_code)]
+pub async fn encrypt_metadata_async(metadata: &str) -> Result<Vec<u8>, String> {
+    let key = generate_key_async().await?;
+    encrypt(metadata.as_bytes().to_vec(), &key)
+}
+
 /// Decrypts metadata from binary data
 pub fn decrypt_metadata(encrypted_metadata: &[u8]) -> Result<String, String> {
     let key = generate_key()?;
+    let decrypted_data = decrypt(encrypted_metadata.to_vec(), &key)?;
+    String::from_utf8(decrypted_data)
+        .map_err(|e| format!("Failed to convert decrypted metadata to string: {}", e))
+}
+
+/// Decrypts metadata from binary data (async version for enterprise key management)
+#[allow(dead_code)]
+pub async fn decrypt_metadata_async(encrypted_metadata: &[u8]) -> Result<String, String> {
+    let key = generate_key_async().await?;
     let decrypted_data = decrypt(encrypted_metadata.to_vec(), &key)?;
     String::from_utf8(decrypted_data)
         .map_err(|e| format!("Failed to convert decrypted metadata to string: {}", e))

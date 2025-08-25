@@ -6,12 +6,17 @@ mod auth;
 mod crypto;
 mod db;
 mod email;
+mod enhanced_auth_handlers;
+mod enterprise_session_manager;
 mod ip_controls;
+mod key_management;
 mod mfa;
 mod models;
 mod oauth;
 mod schema;
 mod sso_auth;
+mod token_management;
+mod zero_knowledge;
 
 use actix_web::{web, App, HttpServer, middleware::Logger, http::header, dev::{ServiceRequest, ServiceResponse}, Error, Result};
 use actix_cors::Cors;
@@ -19,7 +24,7 @@ use actix_governor::{Governor, GovernorConfigBuilder};
 use dotenv::dotenv;
 use std::env;
 use log;
-use actix_web::dev::{forward_ready, Service, ServiceFactory, Transform};
+use actix_web::dev::{forward_ready, Service, Transform};
 use futures_util::future::LocalBoxFuture;
 use std::future::{ready, Ready};
 use std::rc::Rc;
@@ -396,7 +401,7 @@ mod handlers {
                                     let cookie_value = format!("auth_token={}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=900", token_pair.access_token);
                                     
                                     // Prepare response data
-                                    let mut response_data = serde_json::json!({
+                                    let response_data = serde_json::json!({
                                         "access_token": token_pair.access_token,
                                         "refresh_token": token_pair.refresh_token,
                                         "expires_in": 900 // 15 minutes in seconds
@@ -451,7 +456,7 @@ mod handlers {
     // Refresh access token
     pub async fn refresh_token(
         refresh_data: web::Json<RefreshTokenRequest>,
-        db_pool: web::Data<db::DbPool>,
+        _db_pool: web::Data<db::DbPool>,
     ) -> Result<HttpResponse, Error> {
         match auth::refresh_access_token(&refresh_data.refresh_token) {
             Ok(token_pair) => {
@@ -2388,6 +2393,10 @@ async fn main() -> std::io::Result<()> {
     let db_pool = db::establish_connection();
     log::info!("Database connection pool established");
     
+    // Initialize token manager
+    let token_manager = std::sync::Arc::new(token_management::TokenManager::new(db_pool.clone()));
+    log::info!("Token manager initialized");
+    
     // Get port from environment or default to 8080
     let port = env::var("PORT")
         .unwrap_or_else(|_| "8080".to_string())
@@ -2425,6 +2434,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(Governor::new(&general_governor_conf))
             .app_data(web::Data::new(db_pool.clone()))
+            .app_data(web::Data::new(token_manager.clone()))
             .service(
                 web::resource("/register")
                     .wrap(Governor::new(&auth_governor_conf))
@@ -2469,6 +2479,73 @@ async fn main() -> std::io::Result<()> {
                 web::resource("/auth/change-password")
                     .wrap(Governor::new(&auth_governor_conf))
                     .route(web::post().to(handlers::change_password))
+            )
+            // Token management endpoints
+            .service(
+                web::resource("/auth/token/refresh")
+                    .wrap(Governor::new(&auth_governor_conf))
+                    .route(web::post().to(token_management::refresh_token))
+            )
+            .service(
+                web::resource("/auth/token/revoke")
+                    .wrap(Governor::new(&auth_governor_conf))
+                    .route(web::post().to(token_management::revoke_token))
+            )
+            .service(
+                web::resource("/auth/sessions")
+                    .route(web::post().to(token_management::manage_sessions))
+            )
+            .service(
+                web::resource("/auth/analytics")
+                    .route(web::get().to(token_management::get_token_analytics))
+            )
+            .service(
+                web::resource("/auth/cleanup")
+                    .route(web::post().to(token_management::cleanup_tokens))
+            )
+            // Enterprise session management endpoints
+            .service(
+                web::resource("/auth/enterprise/sessions")
+                    .route(web::post().to(enterprise_session_manager::create_enterprise_session))
+            )
+            .service(
+                web::resource("/auth/enterprise/sessions/validate")
+                    .route(web::post().to(enterprise_session_manager::validate_enterprise_session))
+            )
+            .service(
+                web::resource("/auth/enterprise/analytics")
+                    .route(web::get().to(enterprise_session_manager::get_enterprise_analytics))
+            )
+            .service(
+                web::resource("/auth/enterprise/cleanup")
+                    .route(web::post().to(enterprise_session_manager::cleanup_enterprise_data))
+            )
+            // Enhanced authentication endpoints
+            .service(
+                web::resource("/auth/enhanced/login")
+                    .wrap(Governor::new(&auth_governor_conf))
+                    .route(web::post().to(enhanced_auth_handlers::enhanced_login))
+            )
+            .service(
+                web::resource("/auth/enhanced/refresh")
+                    .wrap(Governor::new(&auth_governor_conf))
+                    .route(web::post().to(enhanced_auth_handlers::enhanced_refresh_token))
+            )
+            .service(
+                web::resource("/auth/enhanced/logout")
+                    .route(web::post().to(enhanced_auth_handlers::enhanced_logout))
+            )
+            .service(
+                web::resource("/auth/enhanced/verify")
+                    .route(web::get().to(enhanced_auth_handlers::enhanced_verify_auth))
+            )
+            .service(
+                web::resource("/auth/enhanced/sessions")
+                    .route(web::get().to(enhanced_auth_handlers::get_user_sessions))
+            )
+            .service(
+                web::resource("/auth/enhanced/statistics")
+                    .route(web::get().to(enhanced_auth_handlers::get_token_statistics))
             )
             // OAuth endpoints
             .service(

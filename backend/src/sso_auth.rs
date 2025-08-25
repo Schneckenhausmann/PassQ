@@ -10,13 +10,11 @@ use oauth2::{
 use reqwest::Client;
 use uuid::Uuid;
 use diesel::prelude::*;
-use std::collections::HashMap;
 use crate::{
     db::DbPool,
-    oauth::{OAuthProvider, OAuthUserInfo, OAuthLoginRequest, OAuthLoginResponse, OAuthAccount, NewOAuthAccount},
+    oauth::{OAuthProvider, OAuthUserInfo, OAuthLoginResponse, OAuthAccount, NewOAuthAccount},
     models::{User, NewUser},
     auth,
-    crypto,
     schema::{users, oauth_accounts},
 };
 use std::env;
@@ -397,7 +395,7 @@ pub async fn unlink_oauth_account(
     })?;
 
     // Verify the account belongs to the user
-    let oauth_account = oauth_accounts::table
+    let _oauth_account = oauth_accounts::table
         .filter(oauth_accounts::id.eq(account_id))
         .filter(oauth_accounts::user_id.eq(user_id))
         .first::<OAuthAccount>(&mut conn)

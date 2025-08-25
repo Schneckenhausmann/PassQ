@@ -256,7 +256,7 @@ impl EmailService {
             username, reset_url, reset_url, reset_url
         );
 
-        let text_body = format!(
+        let _text_body = format!(
             "Hello {},\n\n\
             We received a request to reset your password for your PassQ account.\n\n\
             To reset your password, visit this link:\n\
@@ -289,6 +289,7 @@ impl EmailService {
     }
 
     /// Test email connectivity
+    #[allow(dead_code)]
     pub async fn test_connection(&self) -> Result<(), String> {
         match self.smtp_transport.test_connection() {
             Ok(true) => {

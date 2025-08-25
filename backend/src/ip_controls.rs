@@ -97,6 +97,7 @@ impl IpWhitelist {
 }
 
 /// Get geolocation information for an IP address using ip-api.com
+#[allow(dead_code)]
 pub async fn get_geolocation(ip: &IpAddr) -> Result<GeolocationInfo, String> {
     // Skip geolocation for local/private IPs
     if is_private_ip(ip) {
@@ -146,13 +147,14 @@ pub async fn get_geolocation(ip: &IpAddr) -> Result<GeolocationInfo, String> {
 }
 
 /// Check if an IP address is private/local
+#[allow(dead_code)]
 fn is_private_ip(ip: &IpAddr) -> bool {
     match ip {
         IpAddr::V4(ipv4) => {
             ipv4.is_private() || ipv4.is_loopback() || ipv4.is_link_local()
         }
         IpAddr::V6(ipv6) => {
-            ipv6.is_loopback() || ipv6.is_unicast_link_local()
+            ipv6.is_loopback() || ipv6.segments()[0] == 0xfe80
         }
     }
 }
@@ -189,6 +191,7 @@ pub fn extract_client_ip(req: &actix_web::HttpRequest) -> Option<IpAddr> {
 }
 
 /// Check if login is from a suspicious location
+#[allow(dead_code)]
 pub fn is_suspicious_location(current: &GeolocationInfo, previous: &GeolocationInfo) -> bool {
     // Consider it suspicious if country changed
     if current.country != previous.country {
@@ -207,7 +210,7 @@ pub fn is_suspicious_location(current: &GeolocationInfo, previous: &GeolocationI
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::net::{Ipv4Addr, Ipv6Addr};
+    use std::net::Ipv4Addr;
 
     #[test]
     fn test_ip_whitelist() {

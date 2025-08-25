@@ -9,7 +9,6 @@ use chrono::{Utc, Duration};
 use regex::Regex;
 use log;
 use ring::rand::{SystemRandom, SecureRandom};
-use ring::digest;
 
 /// Validates and sanitizes a username
 pub fn sanitize_username(username: &str) -> Result<String, String> {
@@ -212,6 +211,7 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
     }
 }
 /// Generates a JWT token for a user
+#[allow(dead_code)]
 pub fn generate_token(user_id: Uuid) -> Result<String, jsonwebtoken::errors::Error> {
     log::info!("Generating JWT token for user: {}", user_id);
     
@@ -338,6 +338,7 @@ pub fn generate_csrf_token() -> Result<String, String> {
 }
 
 /// Validate a CSRF token
+#[allow(dead_code)]
 pub fn validate_csrf_token(token: &str, expected_token: &str) -> bool {
     if token.is_empty() || expected_token.is_empty() {
         log::warn!("Empty CSRF token provided");

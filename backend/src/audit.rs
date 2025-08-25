@@ -7,7 +7,6 @@ use diesel::prelude::*;
 use crate::db::DbPool;
 use crate::schema::audit_logs;
 use ring::hmac;
-use ring::rand::{SystemRandom, SecureRandom};
 use std::env;
 use log;
 
@@ -96,6 +95,7 @@ fn generate_integrity_hash(log: &AuditEvent) -> Result<String, String> {
 }
 
 /// Verify audit log integrity
+#[allow(dead_code)]
 pub fn verify_log_integrity(log: &AuditLog) -> Result<bool, String> {
     let event = AuditEvent {
         event_type: parse_event_type(&log.event_type)?,
@@ -112,6 +112,7 @@ pub fn verify_log_integrity(log: &AuditLog) -> Result<bool, String> {
 }
 
 /// Parse event type from string
+#[allow(dead_code)]
 fn parse_event_type(event_type: &str) -> Result<AuditEventType, String> {
     match event_type {
         "UserLogin" => Ok(AuditEventType::UserLogin),
@@ -201,6 +202,7 @@ pub fn extract_user_agent(req: &actix_web::HttpRequest) -> Option<String> {
 }
 
 /// Get audit logs for a user (admin only)
+#[allow(dead_code)]
 pub async fn get_user_audit_logs(
     db_pool: &DbPool,
     user_id: Uuid,
@@ -223,6 +225,7 @@ pub async fn get_user_audit_logs(
 }
 
 /// Verify integrity of all audit logs (admin function)
+#[allow(dead_code)]
 pub async fn verify_all_logs_integrity(
     db_pool: &DbPool,
 ) -> Result<(usize, usize), String> {

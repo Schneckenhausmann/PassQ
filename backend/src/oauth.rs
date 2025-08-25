@@ -2,9 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use crate::schema::{oauth_accounts, users};
+use crate::schema::oauth_accounts;
 
 #[derive(Debug, Serialize, Deserialize, Queryable, Identifiable, Associations)]
 #[diesel(belongs_to(crate::models::User))]
@@ -83,6 +82,7 @@ impl OAuthProvider {
         }
     }
 
+    #[allow(dead_code)]
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "microsoft" => Some(OAuthProvider::Microsoft),
@@ -91,6 +91,7 @@ impl OAuthProvider {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_config(&self) -> OAuthConfig {
         match self {
             OAuthProvider::Microsoft => OAuthConfig {

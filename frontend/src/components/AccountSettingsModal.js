@@ -20,13 +20,27 @@ function AccountSettingsModal({ isOpen, onClose }) {
   const loadLinkedAccounts = async () => {
     try {
       setLoading(true);
+      setError(''); // Clear any previous errors
+      console.log('Loading linked accounts...');
       const response = await authAPI.getLinkedAccounts();
+      console.log('Linked accounts response:', response);
       setLinkedAccounts(response.data || []);
     } catch (err) {
       console.error('Error loading linked accounts:', err);
-      setError('Failed to load linked accounts');
+      console.error('Error details - status:', err.status, 'message:', err.message);
+      // Handle authentication errors gracefully
+      if (err.status === 401 || err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+        setError('Authentication required. Please refresh the page and try again.');
+        console.log('Setting auth error message');
+      } else {
+        setError('Failed to load linked accounts: ' + (err.message || 'Unknown error'));
+        console.log('Setting generic error message');
+      }
+      // Set empty array to prevent rendering issues
+      setLinkedAccounts([]);
     } finally {
       setLoading(false);
+      console.log('Loading finished');
     }
   };
 
@@ -77,7 +91,9 @@ function AccountSettingsModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  return (
+  // Add error boundary to prevent white screen
+  try {
+    return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white cartoon-border shadow-2xl cartoon-shadow rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-black/20">
@@ -304,6 +320,20 @@ function AccountSettingsModal({ isOpen, onClose }) {
       />
     </div>
   );
+  } catch (error) {
+    console.error('Error rendering AccountSettingsModal:', error);
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white cartoon-border shadow-2xl cartoon-shadow rounded-lg w-full max-w-md p-6">
+          <h2 className="text-lg font-bold mb-4">Settings Unavailable</h2>
+          <p className="text-gray-600 mb-4">There was an error loading the settings page. Please refresh and try again.</p>
+          <button onClick={onClose} className="cartoon-btn cartoon-btn-primary w-full">
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default AccountSettingsModal;

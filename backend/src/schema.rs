@@ -118,12 +118,163 @@ diesel::table! {
 
 diesel::joinable!(oauth_accounts -> users (user_id));
 
+diesel::table! {
+    active_sessions (id) {
+        id -> Uuid,
+        session_id -> Varchar,
+        user_id -> Uuid,
+        access_token_jti -> Varchar,
+        refresh_token_jti -> Varchar,
+        created_at -> Timestamptz,
+        last_activity -> Timestamptz,
+        expires_at -> Timestamptz,
+        ip_address -> Nullable<Varchar>,
+        user_agent -> Nullable<Text>,
+        device_fingerprint -> Nullable<Varchar>,
+        device_name -> Nullable<Varchar>,
+        device_type -> Nullable<Varchar>,
+        location_country -> Nullable<Varchar>,
+        location_region -> Nullable<Varchar>,
+        location_city -> Nullable<Varchar>,
+        is_active -> Bool,
+        created_by_ip -> Nullable<Varchar>,
+        last_seen_ip -> Nullable<Varchar>,
+        session_flags -> Nullable<Jsonb>,
+    }
+}
+
+diesel::table! {
+    revoked_tokens (id) {
+        id -> Uuid,
+        jti -> Varchar,
+        user_id -> Uuid,
+        session_id -> Nullable<Varchar>,
+        token_type -> Varchar,
+        revoked_at -> Timestamptz,
+        expires_at -> Timestamptz,
+        revocation_reason -> Varchar,
+        revoked_by_user_id -> Nullable<Uuid>,
+        revoked_by_admin -> Nullable<Bool>,
+        original_expiry -> Nullable<Timestamptz>,
+        ip_address -> Nullable<Varchar>,
+        user_agent -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    token_analytics (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        session_id -> Nullable<Varchar>,
+        event_type -> Varchar,
+        token_type -> Varchar,
+        timestamp -> Timestamptz,
+        ip_address -> Nullable<Varchar>,
+        user_agent -> Nullable<Text>,
+        success -> Bool,
+        error_code -> Nullable<Varchar>,
+        error_message -> Nullable<Text>,
+        device_fingerprint -> Nullable<Varchar>,
+        geolocation -> Nullable<Jsonb>,
+        risk_score -> Nullable<Int4>,
+        additional_data -> Nullable<Jsonb>,
+    }
+}
+
+diesel::table! {
+    session_security_events (id) {
+        id -> Uuid,
+        session_id -> Varchar,
+        user_id -> Uuid,
+        event_type -> Varchar,
+        severity -> Varchar,
+        timestamp -> Timestamptz,
+        ip_address -> Nullable<Varchar>,
+        user_agent -> Nullable<Text>,
+        description -> Nullable<Text>,
+        action_taken -> Nullable<Varchar>,
+        resolved -> Nullable<Bool>,
+        resolved_at -> Nullable<Timestamptz>,
+        resolved_by -> Nullable<Uuid>,
+        metadata -> Nullable<Jsonb>,
+    }
+}
+
+diesel::table! {
+    session_limits (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        max_concurrent_sessions -> Int4,
+        max_sessions_per_device -> Int4,
+        session_timeout_minutes -> Int4,
+        refresh_timeout_days -> Int4,
+        enforce_single_session -> Nullable<Bool>,
+        allow_concurrent_mobile -> Nullable<Bool>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    trusted_devices (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        device_fingerprint -> Varchar,
+        device_name -> Nullable<Varchar>,
+        device_type -> Nullable<Varchar>,
+        first_seen -> Timestamptz,
+        last_seen -> Timestamptz,
+        trust_level -> Varchar,
+        trust_score -> Nullable<Int4>,
+        ip_addresses -> Nullable<Jsonb>,
+        user_agent_patterns -> Nullable<Jsonb>,
+        location_history -> Nullable<Jsonb>,
+        session_count -> Nullable<Int4>,
+        last_session_id -> Nullable<Varchar>,
+        notes -> Nullable<Text>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    session_monitoring_rules (id) {
+        id -> Uuid,
+        rule_name -> Varchar,
+        rule_type -> Varchar,
+        enabled -> Bool,
+        severity -> Varchar,
+        conditions -> Jsonb,
+        actions -> Jsonb,
+        threshold_value -> Nullable<Int4>,
+        time_window_minutes -> Nullable<Int4>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        last_triggered -> Nullable<Timestamptz>,
+        trigger_count -> Nullable<Int4>,
+    }
+}
+
+diesel::joinable!(active_sessions -> users (user_id));
+diesel::joinable!(revoked_tokens -> users (user_id));
+diesel::joinable!(token_analytics -> users (user_id));
+diesel::joinable!(session_security_events -> users (user_id));
+diesel::joinable!(session_limits -> users (user_id));
+diesel::joinable!(trusted_devices -> users (user_id));
+
 diesel::allow_tables_to_appear_in_same_query!(
+    active_sessions,
     audit_logs,
     folders,
     login_history,
     oauth_accounts,
     passwords,
+    revoked_tokens,
+    session_limits,
+    session_monitoring_rules,
+    session_security_events,
     shares,
+    token_analytics,
+    trusted_devices,
     users,
 );
