@@ -2411,6 +2411,10 @@ async fn main() -> std::io::Result<()> {
             .allowed_origin("http://127.0.0.1:3000")  // Alternative localhost
             .allowed_origin("http://localhost:8080")  // Alternative frontend port
             .allowed_origin("https://passq.app")      // Production domain (update as needed)
+            .allowed_origin_fn(|origin, _req_head| {
+                // Allow Chrome extension origins
+                origin.as_bytes().starts_with(b"chrome-extension://")
+            })
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
             .allowed_headers(vec!["Content-Type", "Authorization", "Accept"])
             .supports_credentials();

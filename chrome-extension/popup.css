@@ -1,0 +1,985 @@
+/* PassQ Chrome Extension Popup Styles - Cartoon/Comic Book Design */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Nuclear option: Hide any rounded rectangle elements */
+*[style*="border-radius"],
+*[style*="rounded"],
+.rounded,
+.rounded-rectangle,
+.browser-style,
+.moz-extension,
+.webextension-popup {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Target any elements with rounded corners */
+*:not(.cartoon-btn):not(.logo):not(svg):not(.credential-item):not(.site-favicon) {
+  border-radius: 0 !important;
+  -webkit-border-radius: 0 !important;
+  -moz-border-radius: 0 !important;
+}
+
+/* Override any browser extension styling */
+html,
+body,
+.popup-container,
+.popup-header {
+  -moz-appearance: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Prevent browser default button/input styling */
+button:not(.cartoon-btn), input:not([class]) {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Aggressive fix for the white rounded rectangle issue */
+.popup-header {
+  background: white !important;
+  padding: 16px 21px !important;
+  border-bottom: 3px solid #000 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* Remove all pseudo-elements and browser defaults */
+.popup-header::before,
+.popup-header::after,
+.popup-header *::before,
+.popup-header *::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure no unwanted elements appear in header */
+.popup-header > * {
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Reset any browser defaults on header children */
+.popup-header > *:not(.logo-container):not(.logout-btn) {
+  display: none !important;
+}
+
+/* Force remove any browser-generated elements */
+.popup-header input,
+.popup-header button:not(.logout-btn),
+.popup-header div:not(.logo-container),
+.popup-header span:not(.logo-text) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  background: #fff !important;
+  color: #000 !important;
+  width: 350px !important;
+  max-width: 350px !important;
+  min-height: 600px !important;
+  max-height: 600px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove any browser-generated elements or default styling */
+body::before,
+body::after,
+html::before,
+html::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Force remove any browser UI elements */
+body > *:not(.popup-container) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+.popup-container {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 600px !important;
+  background: #fff !important;
+  width: 100% !important;
+  max-width: 350px !important;
+  min-height: 600px !important;
+  max-height: 600px !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove any pseudo-elements from popup container */
+.popup-container::before,
+.popup-container::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Force remove any unwanted child elements */
+.popup-container > *:not(.popup-header):not(.action-bar):not(.server-config):not(.login-form):not(.main-content):not(.error-state):not(.credential-editor) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
+/* Cartoon/Comic Book Utilities */
+.cartoon-shadow {
+  box-shadow: 4px 4px 0 0 #000;
+}
+
+.cartoon-border {
+  border: 3px solid #000;
+}
+
+.cartoon-btn {
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 0 #000;
+  background: white;
+  color: black;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.15s;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cartoon-btn:hover {
+  background: #f3f4f6;
+}
+
+.cartoon-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 #000;
+}
+
+.cartoon-btn-primary {
+  background: white;
+  color: black;
+  border: 3px solid #000;
+}
+
+.cartoon-btn-primary:hover {
+  background: #f3f4f6;
+}
+
+.cartoon-btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Header - styling moved to top of file */
+
+/* Action Bar */
+.action-bar {
+  background: white;
+  padding: 12px 21px;
+  border-bottom: 3px solid #000;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.action-bar .cartoon-btn {
+  flex: 1;
+  min-width: 80px;
+}
+
+.action-btn-compact {
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  min-height: 32px;
+}
+
+.logout-btn {
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  min-height: 32px;
+  flex: none !important;
+  min-width: auto !important;
+  margin: 0 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0 0 #000 !important;
+  background: white !important;
+  color: black !important;
+  font-weight: bold !important;
+  border-radius: 8px !important;
+}
+
+.add-entry-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.plus-icon {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: default !important;
+}
+
+.logo {
+  width: 28px;
+  height: 28px;
+  cursor: default !important;
+  pointer-events: none !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 800;
+  color: black;
+  letter-spacing: 2px;
+  cursor: default !important;
+  pointer-events: none !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Server Configuration */
+.server-config {
+  padding: 24px 29px;
+  background: white;
+}
+
+.server-config h3 {
+  margin-bottom: 20px;
+  text-align: center;
+  color: black;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.server-config .cartoon-btn {
+  display: block;
+  margin: 20px auto 0;
+  width: auto;
+  min-width: 140px;
+}
+
+/* Login Form */
+.login-form {
+  padding: 24px 29px;
+  flex: 1;
+  background: white;
+}
+
+.login-form h3 {
+  margin-bottom: 20px;
+  text-align: center;
+  color: black;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.server-status {
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 2px solid #000;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.server-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.server-url {
+  color: #000;
+  font-weight: 500;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.btn-link:hover {
+  color: #1d4ed8;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #000;
+  font-weight: 600;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 3px solid #000;
+  border-radius: 8px;
+  background: white;
+  color: black;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.form-group input:focus {
+  outline: none;
+  box-shadow: 4px 4px 0 0 #3b82f6;
+  border-color: #3b82f6;
+}
+
+.form-help {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: black;
+  color: white;
+  border: 3px solid #000;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 4px 4px 0 0 #000;
+}
+
+.btn-primary:hover {
+  background: #374151;
+}
+
+.btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 #000;
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  background: white;
+  color: black;
+  border: 3px solid #000;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 2px 2px 0 0 #000;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+}
+
+.btn-secondary:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 0 #000;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.login-footer a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.login-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  min-height: 0;
+  padding: 0 0 8px 0;
+}
+
+/* Search */
+.search-container {
+  position: relative;
+  padding: 16px 21px;
+  border-bottom: 3px solid #000;
+  background: white;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 3px solid #000;
+  border-radius: 8px;
+  background: white;
+  color: black;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.search-input:focus {
+  outline: none;
+  box-shadow: 4px 4px 0 0 #3b82f6;
+  border-color: #3b82f6;
+}
+
+.search-input::placeholder {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.search-icon {
+  position: absolute;
+  left: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+  stroke-width: 3;
+}
+
+/* Current Site */
+.current-site {
+  padding: 16px 21px;
+  border-bottom: 3px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9fafb;
+}
+
+.site-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.site-favicon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  border: 2px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.site-details {
+  flex: 1;
+}
+
+.site-name {
+  font-weight: 700;
+  color: black;
+  font-size: 14px;
+}
+
+.site-url {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.site-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Credentials List */
+.credentials-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 16px;
+  min-height: 0;
+  max-height: calc(600px - 180px);
+  min-height: 300px;
+}
+
+.credential-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 13px;
+  background: white !important;
+  border: 2px solid black !important;
+  border-radius: 12px !important;
+  box-shadow: 3px 3px 0 #000 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.credential-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 #000;
+}
+
+.credential-icon {
+  margin-right: 12px;
+}
+
+.site-favicon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+}
+
+.credential-info {
+  flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 120px);
+  overflow: hidden;
+}
+
+.credential-title {
+  font-weight: bold;
+  margin-bottom: 3px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+
+.credential-username {
+  color: #666;
+  font-size: 11px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.credential-url {
+  color: #999;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.credential-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  width: 24px;
+  height: 24px;
+  border: 2px solid black;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  transition: all 0.2s ease;
+  box-shadow: 2px 2px 0 #000;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.action-btn svg {
+  width: 12px;
+  height: 12px;
+  color: #333;
+  transition: color 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0 #000;
+  background: #f8f9fa;
+}
+
+.action-btn:hover svg {
+  color: #000;
+}
+
+.action-btn:active {
+  transform: translateY(0);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.no-credentials {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+  font-style: italic;
+}
+
+/* Footer */
+.popup-footer {
+  padding: 12px 16px;
+  border-top: 2px solid black;
+  background: white;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.popup-footer .cartoon-btn {
+  flex: 1;
+  min-width: 80px;
+}
+
+/* Toast Notifications */
+.toast {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 16px;
+  border: 3px solid #000;
+  border-radius: 8px;
+  background: white;
+  color: black;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 4px 4px 0 0 #000;
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.toast.show {
+  transform: translateX(0);
+}
+
+/* Credential Editor Styles */
+.credential-editor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  border: 2px solid #333;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 2px solid #333;
+  background: #f8f9fa;
+}
+
+.editor-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: #e9ecef;
+}
+
+.editor-content {
+  padding: 16px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: bold;
+  color: #333;
+  font-size: 12px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #333;
+  border-radius: 4px;
+  font-size: 12px;
+  box-sizing: border-box;
+  background: white;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.password-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-group .form-input {
+  padding-right: 36px;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password-btn:hover {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.editor-actions .cartoon-btn {
+  flex: 1;
+  min-width: 70px;
+  font-size: 11px;
+  padding: 6px 12px;
+}
+
+.cartoon-btn-danger {
+  background: #dc3545;
+  color: white;
+  border: 2px solid #333;
+}
+
+.cartoon-btn-danger:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+.toast.success {
+  background: #10b981;
+  color: white;
+}
+
+.toast.error {
+  background: #ef4444;
+  color: white;
+}
+
+.toast.info {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: white;
+  height: 100%;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Error State */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: white;
+  height: 100%;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.error-state p {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* Hide scrollbars for a cleaner look */
+.credentials-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.credentials-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.credentials-list::-webkit-scrollbar-thumb {
+  background: #000;
+  border-radius: 3px;
+}
+
+.credentials-list::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+/* Animation for logo wiggle - DISABLED TO FIX PSEUDO BUTTON ISSUE */
+.logo-wiggle {
+  /* animation: wiggle 0.7s infinite alternate cubic-bezier(.36,.07,.19,.97); */
+}
+
+@keyframes wiggle {
+  0% { transform: rotate(-3deg) scale(1.03); }
+  100% { transform: rotate(3deg) scale(0.97); }
+}

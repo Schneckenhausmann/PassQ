@@ -1,0 +1,96 @@
+{
+  "manifest_version": 3,
+  "name": "PassQ - Password Manager",
+  "version": "1.0.0",
+  "description": "Secure password autofill extension for PassQ password manager",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  
+  "host_permissions": [
+    "https://github.com/*",
+    "https://gitlab.com/*",
+    "https://google.com/*",
+    "https://microsoft.com/*",
+    "https://amazon.com/*",
+    "https://facebook.com/*",
+    "https://twitter.com/*",
+    "https://linkedin.com/*",
+    "https://stackoverflow.com/*",
+    "https://reddit.com/*",
+    "http://localhost:*/*",
+    "https://passq.app/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PassQ - Password Manager"
+  },
+  
+  "content_scripts": [{
+    "matches": [
+      "https://github.com/*",
+      "https://gitlab.com/*",
+      "https://google.com/*",
+      "https://microsoft.com/*",
+      "https://amazon.com/*",
+      "https://facebook.com/*",
+      "https://twitter.com/*",
+      "https://linkedin.com/*",
+      "https://stackoverflow.com/*",
+      "https://reddit.com/*",
+      "http://localhost:*/*",
+      "https://passq.app/*"
+    ],
+    "js": ["dom-sanitizer.js", "content.js"],
+    "css": ["content.css"],
+    "run_at": "document_end"
+  }],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PassQ",
+    "default_icon": {
+      "16": "icons/icon-48.svg",
+      "32": "icons/icon-48.svg",
+      "48": "icons/icon-48.svg",
+      "128": "icons/icon-96.svg"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon-48.svg",
+    "32": "icons/icon-48.svg",
+    "48": "icons/icon-48.svg",
+    "128": "icons/icon-96.svg"
+  },
+  
+  "web_accessible_resources": [{
+    "resources": ["passq-overlay.html", "icons/*"],
+    "matches": [
+      "https://github.com/*",
+      "https://gitlab.com/*",
+      "https://google.com/*",
+      "https://microsoft.com/*",
+      "https://amazon.com/*",
+      "https://facebook.com/*",
+      "https://twitter.com/*",
+      "https://linkedin.com/*",
+      "https://stackoverflow.com/*",
+      "https://reddit.com/*",
+      "http://localhost:*/*",
+      "https://passq.app/*"
+    ]
+  }],
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none';"
+  }
+}
