@@ -2,6 +2,8 @@
 
 // Import the crypto module using importScripts
 importScripts('crypto.js');
+importScripts('offline-cache.js');
+importScripts('sync-manager.js');
 
 try {
   console.log('PassQCrypto successfully loaded:', typeof PassQCrypto);
@@ -11,11 +13,39 @@ try {
       this.apiUrl = null;
       this.authToken = null;
       this.crypto = new PassQCrypto();
+      this.syncManager = null;
     }
 
     async init() {
       await this.loadConfig();
       this.setupMessageListeners();
+      await this.initializeAutoLock();
+      await this.initializeSyncManager();
+    }
+
+    async initializeAutoLock() {
+      try {
+        const result = await chrome.storage.local.get('extensionSettings');
+        const settings = result.extensionSettings;
+        
+        if (settings && settings.autoLockTimeout > 0) {
+          this.setupAutoLockTimer(settings.autoLockTimeout);
+        }
+      } catch (error) {
+        console.error('Error initializing auto-lock:', error);
+      }
+    }
+
+    async initializeSyncManager() {
+      try {
+        this.syncManager = new PassQSyncManager();
+        await this.syncManager.init();
+        console.log('Sync manager initialized successfully');
+      } catch (error) {
+        console.warn('Sync manager initialization failed, offline functionality disabled:', error.message);
+        // Extension continues to work without offline sync
+        this.syncManager = null;
+      }
     }
 
   async loadConfig() {
@@ -30,6 +60,9 @@ try {
 
   setupMessageListeners() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      // Reset auto-lock timer on any user activity
+      this.resetAutoLockTimer();
+      
       this.handleMessage(message, sender, sendResponse);
       return true; // Keep the message channel open for async response
     });
@@ -43,7 +76,26 @@ try {
         if (changes.encryptedAuthToken) {
           this.authToken = await this.crypto.retrieveToken();
         }
+        if (changes.extensionSettings) {
+          // Update auto-lock timer when settings change
+          const settings = changes.extensionSettings.newValue;
+          if (settings && settings.autoLockTimeout > 0) {
+            this.setupAutoLockTimer(settings.autoLockTimeout);
+          } else {
+            this.clearAutoLockTimer();
+          }
+        }
       }
+    });
+
+    // Listen for tab activation to reset auto-lock timer
+    chrome.tabs.onActivated.addListener(() => {
+      this.resetAutoLockTimer();
+    });
+
+    // Listen for window focus changes
+    chrome.windows.onFocusChanged.addListener(() => {
+      this.resetAutoLockTimer();
     });
   }
 
@@ -67,6 +119,24 @@ try {
           break;
         case 'autofillCredentials':
           await this.handleAutofillCredentials(message, sender, sendResponse);
+          break;
+        case 'SETTINGS_UPDATED':
+          await this.handleSettingsUpdated(message, sendResponse);
+          break;
+        case 'CLEAR_OFFLINE_CACHE':
+          await this.handleClearOfflineCache(sendResponse);
+          break;
+        case 'SETTINGS_REQUEST':
+          await this.handleSettingsRequest(sendResponse);
+          break;
+        case 'SYNC_NOW':
+          await this.handleSyncNow(sendResponse);
+          break;
+        case 'SYNC_STATUS':
+          await this.handleSyncStatus(sendResponse);
+          break;
+        case 'FORCE_SYNC_CREDENTIAL':
+          await this.handleForceSyncCredential(message, sendResponse);
           break;
         default:
           sendResponse({ success: false, error: 'Unknown action' });
@@ -219,6 +289,141 @@ try {
     } catch {
       return website;
     }
+  }
+
+  async handleSettingsUpdated(message, sendResponse) {
+    try {
+      // Store the updated settings
+      await chrome.storage.local.set({ extensionSettings: message.settings });
+      
+      // Initialize auto-lock timer if enabled
+      if (message.settings.autoLockTimeout > 0) {
+        this.setupAutoLockTimer(message.settings.autoLockTimeout);
+      } else {
+        this.clearAutoLockTimer();
+      }
+      
+      sendResponse({ success: true });
+    } catch (error) {
+      console.error('Settings update error:', error);
+      sendResponse({ success: false, error: 'Failed to update settings' });
+    }
+  }
+
+  async handleClearOfflineCache(sendResponse) {
+    try {
+      // Clear IndexedDB cache (placeholder for future implementation)
+      // This would clear the offline credential cache
+      console.log('Clearing offline cache...');
+      
+      // For now, just clear any cached data in chrome.storage
+      await chrome.storage.local.remove(['offlineCredentials', 'lastSync']);
+      
+      sendResponse({ success: true });
+    } catch (error) {
+      console.error('Clear cache error:', error);
+      sendResponse({ success: false, error: 'Failed to clear cache' });
+    }
+  }
+
+  async handleSettingsRequest(sendResponse) {
+    try {
+      const result = await chrome.storage.local.get('extensionSettings');
+      sendResponse({ success: true, settings: result.extensionSettings || {} });
+    } catch (error) {
+      console.error('Settings request error:', error);
+      sendResponse({ success: false, error: 'Failed to get settings' });
+    }
+  }
+
+  async handleSyncNow(sendResponse) {
+    try {
+      if (!this.syncManager) {
+        sendResponse({ success: false, error: 'Sync manager not initialized' });
+        return;
+      }
+      
+      const result = await this.syncManager.performFullSync();
+      sendResponse(result);
+    } catch (error) {
+      console.error('Sync now error:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+  }
+
+  async handleSyncStatus(sendResponse) {
+    try {
+      if (!this.syncManager) {
+        sendResponse({ success: false, error: 'Sync manager not initialized' });
+        return;
+      }
+      
+      const status = await this.syncManager.getSyncStatus();
+      sendResponse({ success: true, status });
+    } catch (error) {
+      console.error('Sync status error:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+  }
+
+  async handleForceSyncCredential(message, sendResponse) {
+    try {
+      if (!this.syncManager) {
+        sendResponse({ success: false, error: 'Sync manager not initialized' });
+        return;
+      }
+      
+      const { credentialId, operation, data } = message;
+      const result = await this.syncManager.forceSyncCredential(credentialId, operation, data);
+      sendResponse(result);
+    } catch (error) {
+      console.error('Force sync credential error:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+  }
+
+  setupAutoLockTimer(timeout) {
+    // Clear existing timer
+    this.clearAutoLockTimer();
+    
+    // Set new timer
+    this.autoLockTimer = setTimeout(async () => {
+      try {
+        // Auto-lock by clearing the auth token
+        await this.crypto.removeToken();
+        await this.crypto.clearCryptoData();
+        this.authToken = null;
+        
+        // Notify all tabs about the lock
+        const tabs = await chrome.tabs.query({});
+        tabs.forEach(tab => {
+          chrome.tabs.sendMessage(tab.id, { action: 'sessionLocked' }).catch(() => {
+            // Ignore errors for tabs that don't have content script
+          });
+        });
+        
+        console.log('Extension auto-locked due to inactivity');
+      } catch (error) {
+        console.error('Auto-lock error:', error);
+      }
+    }, timeout);
+  }
+
+  clearAutoLockTimer() {
+    if (this.autoLockTimer) {
+      clearTimeout(this.autoLockTimer);
+      this.autoLockTimer = null;
+    }
+  }
+
+  resetAutoLockTimer() {
+    // Reset the timer when user activity is detected
+    chrome.storage.local.get('extensionSettings').then(result => {
+      const settings = result.extensionSettings;
+      if (settings && settings.autoLockTimeout > 0) {
+        this.setupAutoLockTimer(settings.autoLockTimeout);
+      }
+    });
   }
 }
 

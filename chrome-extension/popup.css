@@ -7,13 +7,13 @@
 }
 
 /* Nuclear option: Hide any rounded rectangle elements */
-*[style*="border-radius"],
-*[style*="rounded"],
-.rounded,
-.rounded-rectangle,
-.browser-style,
-.moz-extension,
-.webextension-popup {
+*[style*="border-radius"]:not(#detachBtn),
+*[style*="rounded"]:not(#detachBtn),
+.rounded:not(#detachBtn),
+.rounded-rectangle:not(#detachBtn),
+.browser-style:not(#detachBtn),
+.moz-extension:not(#detachBtn),
+.webextension-popup:not(#detachBtn) {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
@@ -22,7 +22,7 @@
 }
 
 /* Target any elements with rounded corners */
-*:not(.cartoon-btn):not(.logo):not(svg):not(.credential-item):not(.site-favicon) {
+*:not(.cartoon-btn):not(.logo):not(svg):not(.credential-item):not(.site-favicon):not(#detachBtn) {
   border-radius: 0 !important;
   -webkit-border-radius: 0 !important;
   -moz-border-radius: 0 !important;
@@ -84,14 +84,14 @@ button:not(.cartoon-btn), input:not([class]) {
 }
 
 /* Reset any browser defaults on header children */
-.popup-header > *:not(.logo-container):not(.logout-btn) {
+.popup-header > *:not(.logo-container):not(.logout-btn):not(.header-buttons) {
   display: none !important;
 }
 
 /* Force remove any browser-generated elements */
 .popup-header input,
-.popup-header button:not(.logout-btn),
-.popup-header div:not(.logo-container),
+.popup-header button:not(.logout-btn):not(.settings-btn):not(#detachBtn),
+.popup-header div:not(.logo-container):not(.header-buttons),
 .popup-header span:not(.logo-text) {
   display: none !important;
   visibility: hidden !important;
@@ -196,6 +196,91 @@ body > *:not(.popup-container) {
 
 .cartoon-btn:hover {
   background: #f3f4f6;
+}
+
+/* Header Buttons Container */
+.header-buttons {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* Settings Button */
+.detach-btn {
+  padding: 6px !important;
+  min-width: auto !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid #000 !important;
+  box-shadow: 2px 2px 0 0 #000 !important;
+  background: #10b981 !important;
+  color: white !important;
+  border-radius: 6px !important;
+  transition: all 0.15s !important;
+  cursor: pointer !important;
+}
+
+.detach-btn:hover {
+  background: #059669 !important;
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0 0 #000 !important;
+}
+
+.detach-btn svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+}
+
+.settings-btn {
+  padding: 6px !important;
+  min-width: auto !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid #000 !important;
+  box-shadow: 2px 2px 0 0 #000 !important;
+  background: white !important;
+  border-radius: 6px !important;
+  transition: all 0.15s !important;
+  cursor: pointer !important;
+}
+
+.settings-btn:hover {
+  background: #f3f4f6 !important;
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0 0 #000 !important;
+}
+
+.settings-btn svg {
+  color: #000 !important;
+  stroke: #000 !important;
+  fill: none !important;
+}
+
+/* Offline Indicator */
+.offline-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: #fbbf24;
+  color: #000;
+  padding: 4px 8px;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 0 #000;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 1000;
+  display: none;
 }
 
 .cartoon-btn:active {
@@ -476,6 +561,68 @@ body > *:not(.popup-container) {
 
 .login-footer a:hover {
   text-decoration: underline;
+}
+
+/* Biometric Login */
+.biometric-login {
+  margin-top: 16px;
+}
+
+.divider {
+  text-align: center;
+  margin: 16px 0;
+  position: relative;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #000;
+  z-index: 1;
+}
+
+.divider span {
+  background: white;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  position: relative;
+  z-index: 2;
+}
+
+.cartoon-btn-secondary {
+  background: white;
+  color: #000;
+  border: 3px solid #000;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 4px 4px 0 0 #000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cartoon-btn-secondary:hover {
+  background: #f3f4f6;
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 0 #000;
+}
+
+.cartoon-btn-secondary:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 0 #000;
 }
 
 /* Main Content */
@@ -982,4 +1129,65 @@ body > *:not(.popup-container) {
 @keyframes wiggle {
   0% { transform: rotate(-3deg) scale(1.03); }
   100% { transform: rotate(3deg) scale(0.97); }
+}
+
+/* Sync Status Indicator */
+.sync-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border-bottom: 2px solid #000;
+  font-size: 12px;
+  color: #374151;
+}
+
+.sync-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sync-icon {
+  color: #10b981;
+  transition: transform 0.3s ease;
+}
+
+.sync-status.syncing .sync-icon {
+  animation: spin 1s linear infinite;
+  color: #3b82f6;
+}
+
+.sync-status.error .sync-icon {
+  color: #ef4444;
+}
+
+.sync-status.offline .sync-icon {
+  color: #6b7280;
+}
+
+.pending-changes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.pending-count {
+  background: #f59e0b;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  text-align: center;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

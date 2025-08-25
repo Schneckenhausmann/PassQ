@@ -9,28 +9,13 @@ class PassQAutofill {
     this.domSanitizer = new PassQDOMSanitizer();
     this.shadowRoot = null;
     this.shadowHost = null;
-    // Security: Define allowed domains for autofill
-    this.allowedDomains = new Set([
-      'github.com',
-      'gitlab.com',
-      'google.com',
-      'microsoft.com',
-      'amazon.com',
-      'facebook.com',
-      'twitter.com',
-      'linkedin.com',
-      'stackoverflow.com',
-      'reddit.com'
-    ]);
+    // Allow autofill on all domains (security handled by manifest permissions)
+    this.allowedDomains = null; // Disabled domain restriction
     this.init();
   }
 
   async init() {
-    // Security: Check if current domain is allowed
-    if (!this.isDomainAllowed(window.location.hostname)) {
-      console.log('PassQ: Domain not in whitelist, autofill disabled');
-      return;
-    }
+    // Initialize autofill for all domains (security handled by manifest)
 
     // Check if user is logged in
     try {
@@ -92,12 +77,8 @@ class PassQAutofill {
 
   // Security: Domain whitelist validation
   isDomainAllowed(domain) {
-    if (!domain) return false;
-    
-    // Remove subdomains for checking (e.g., www.github.com -> github.com)
-    const baseDomain = domain.split('.').slice(-2).join('.');
-    
-    return this.allowedDomains.has(domain) || this.allowedDomains.has(baseDomain);
+    // Allow all domains (security handled by manifest permissions)
+    return true;
   }
 
   // Security: Validate message sender

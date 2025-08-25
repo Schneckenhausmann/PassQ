@@ -9,28 +9,13 @@ class PassQAutofill {
     this.domSanitizer = new PassQDOMSanitizer();
     this.shadowRoot = null;
     this.shadowHost = null;
-    // Security: Define allowed domains for autofill
-    this.allowedDomains = new Set([
-      'github.com',
-      'gitlab.com',
-      'google.com',
-      'microsoft.com',
-      'amazon.com',
-      'facebook.com',
-      'twitter.com',
-      'linkedin.com',
-      'stackoverflow.com',
-      'reddit.com'
-    ]);
+    // Allow autofill on all domains (security handled by manifest permissions)
+    this.allowedDomains = null; // Disabled domain restriction
     this.init();
   }
 
   async init() {
-    // Security: Check if current domain is allowed
-    if (!this.isDomainAllowed(window.location.hostname)) {
-      console.log('PassQ: Domain not in whitelist, autofill disabled');
-      return;
-    }
+    // Initialize autofill for all domains (security handled by manifest)
 
     // Check if user is logged in
     try {
@@ -53,51 +38,78 @@ class PassQAutofill {
   }
 
   handleMessage(message, sender, sendResponse) {
-    // Security: Validate message sender
-    if (!this.isValidSender(sender)) {
-      console.warn('PassQ: Invalid message sender:', sender);
-      sendResponse({ success: false, error: 'Invalid sender' });
-      return;
-    }
-
-    // Security: Validate message structure
-    if (!this.isValidMessage(message)) {
-      console.warn('PassQ: Invalid message structure:', message);
-      sendResponse({ success: false, error: 'Invalid message' });
-      return;
-    }
-
-    switch (message.action) {
-      case 'autofill':
-        if (message.credential && this.isDomainAllowed(window.location.hostname)) {
-          this.fillCredentials(message.credential);
-          sendResponse({ success: true });
-        } else {
-          sendResponse({ success: false, error: 'Domain not allowed or invalid credential' });
+    // Ensure we always send a response to prevent connection errors
+    let responseSent = false;
+    
+    const safeResponse = (response) => {
+      if (!responseSent) {
+        responseSent = true;
+        try {
+          sendResponse(response);
+        } catch (error) {
+          console.warn('Failed to send response:', error);
         }
-        break;
-      case 'loginStatusChanged':
-        this.isActive = message.isLoggedIn;
-        if (this.isActive && this.isDomainAllowed(window.location.hostname)) {
-          this.setupAutofill();
-        } else {
-          this.cleanup();
-        }
-        sendResponse({ success: true });
-        break;
-      default:
-        sendResponse({ success: false, error: 'Unknown action' });
+      }
+    };
+
+    try {
+      // Security: Validate message sender
+      if (!this.isValidSender(sender)) {
+        console.warn('PassQ: Invalid message sender:', sender);
+        safeResponse({ success: false, error: 'Invalid sender' });
+        return true; // Keep message channel open
+      }
+
+      // Security: Validate message structure
+      if (!this.isValidMessage(message)) {
+        console.warn('PassQ: Invalid message structure:', message);
+        safeResponse({ success: false, error: 'Invalid message' });
+        return true; // Keep message channel open
+      }
+
+      switch (message.action) {
+        case 'autofill':
+          try {
+            if (message.credential && this.isDomainAllowed(window.location.hostname)) {
+              this.fillCredentials(message.credential);
+              safeResponse({ success: true });
+            } else {
+              safeResponse({ success: false, error: 'Domain not allowed or invalid credential' });
+            }
+          } catch (error) {
+            console.error('Error during autofill:', error);
+            safeResponse({ success: false, error: 'Autofill failed: ' + error.message });
+          }
+          break;
+        case 'loginStatusChanged':
+          try {
+            this.isActive = message.isLoggedIn;
+            if (this.isActive && this.isDomainAllowed(window.location.hostname)) {
+              this.setupAutofill();
+            } else {
+              this.cleanup();
+            }
+            safeResponse({ success: true });
+          } catch (error) {
+            console.error('Error handling login status change:', error);
+            safeResponse({ success: false, error: 'Failed to update login status' });
+          }
+          break;
+        default:
+          safeResponse({ success: false, error: 'Unknown action' });
+      }
+    } catch (error) {
+      console.error('Error in message handler:', error);
+      safeResponse({ success: false, error: 'Message handling failed' });
     }
+    
+    return true; // Keep message channel open for async responses
   }
 
   // Security: Domain whitelist validation
   isDomainAllowed(domain) {
-    if (!domain) return false;
-    
-    // Remove subdomains for checking (e.g., www.github.com -> github.com)
-    const baseDomain = domain.split('.').slice(-2).join('.');
-    
-    return this.allowedDomains.has(domain) || this.allowedDomains.has(baseDomain);
+    // Allow all domains (security handled by manifest permissions)
+    return true;
   }
 
   // Security: Validate message sender

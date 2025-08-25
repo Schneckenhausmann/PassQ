@@ -11,6 +11,11 @@ PassQ is a comprehensive, secure password manager with modern features and a dis
 - 📁 **Folder Organization**: Create folders and subfolders for password organization
 - 🤝 **Sharing System**: Share folders or individual entries with other users
 - 🌐 **Favicon Fetching**: Automatic website icon retrieval for visual identification
+- ⏰ **Auto-Lock Settings**: Configurable vault timeout and browser extension auto-lock
+- 🔒 **Biometric Authentication**: Touch ID, Windows Hello, and hardware security key support
+- 📱 **Offline Mode**: Full offline functionality with intelligent caching and sync
+- 🔄 **Bidirectional Sync**: Real-time synchronization between extensions and database
+- 🪟 **Detached Popup**: Pop-out window mode for enhanced workflow integration
 
 ### Data Management
 - 📤 **CSV Export/Import**: Secure password export with confirmation and import from popular managers
@@ -24,8 +29,13 @@ PassQ is a comprehensive, secure password manager with modern features and a dis
 
 ### Browser Integration
 - 🦊 **Firefox Extension**: Seamless autofill functionality with comic book styling
+- 🌐 **Chrome Extension**: Full-featured Chrome extension with identical functionality
 - 🔄 **Auto-detection**: Smart login form detection and credential matching
 - ⚡ **Quick Access**: One-click autofill and password management
+- 📱 **Offline Caching**: Local storage with encryption for offline access
+- 🔄 **Real-time Sync**: Automatic synchronization with central database
+- ⚙️ **Advanced Settings**: Configurable timeouts, biometric auth, and security options
+- 🪟 **Popup Window**: Detachable window for enhanced multitasking
 
 ### Design & UX
 - 🎨 **Retro Cartoon Design**: Distinctive thick black borders and comic book aesthetics
@@ -39,7 +49,9 @@ PassQ is a comprehensive, secure password manager with modern features and a dis
 - **Backend**: Rust with Actix-web framework
 - **Frontend**: React with modern hooks and responsive design
 - **Database**: PostgreSQL with Diesel ORM
-- **Extension**: Firefox WebExtension API
+- **Extensions**: Chrome and Firefox WebExtension APIs with feature parity
+- **Offline Storage**: IndexedDB with AES-256-GCM encryption
+- **Biometrics**: WebAuthn API for secure authentication
 - **Deployment**: Docker Compose with production-ready configuration
 
 ### Project Structure
@@ -67,12 +79,27 @@ passq/
 │   │   └── index.js     # Application entry point
 │   ├── package.json    # Node.js dependencies
 │   └── Dockerfile      # Frontend container configuration
-├── firefox-extension/   # Browser extension for autofill
-│   ├── manifest.json   # Extension manifest and permissions
+├── chrome-extension/    # Chrome browser extension
+│   ├── manifest.json   # Chrome extension manifest and permissions
 │   ├── background.js   # Background script for API communication
-│   ├── content.js      # Content script for form detection
-│   ├── popup.html      # Extension popup interface
-│   ├── popup.js        # Popup functionality and styling
+│   ├── content.js      # Content script for form detection and autofill
+│   ├── popup.html      # Extension popup interface with settings
+│   ├── popup.js        # Popup functionality and offline caching
+│   ├── settings.html   # Advanced settings panel
+│   ├── settings.js     # Settings management and biometric auth
+│   ├── offline-cache.js # IndexedDB caching and encryption
+│   ├── sync-manager.js # Bidirectional synchronization
+│   └── icons/          # Extension icons and assets
+├── firefox-extension/   # Firefox browser extension (feature parity)
+│   ├── manifest.json   # Firefox extension manifest and permissions
+│   ├── background.js   # Background script for API communication
+│   ├── content.js      # Content script for form detection and autofill
+│   ├── popup.html      # Extension popup interface with settings
+│   ├── popup.js        # Popup functionality and offline caching
+│   ├── settings.html   # Advanced settings panel
+│   ├── settings.js     # Settings management and biometric auth
+│   ├── offline-cache.js # IndexedDB caching and encryption
+│   ├── sync-manager.js # Bidirectional synchronization
 │   └── icons/          # Extension icons and assets
 ├── secrets/             # Production secrets management
 │   ├── postgres_password.txt.example
@@ -126,16 +153,37 @@ passq/
    - **Email Testing (MailHog)**: http://localhost:8025
    - **Database**: localhost:5432
 
-### Firefox Extension Setup
+### Browser Extension Setup
 
+#### Chrome Extension
+1. **Development Installation**
+   - Open Chrome and navigate to `chrome://extensions/`
+   - Enable "Developer mode" in the top right
+   - Click "Load unpacked" and select the `chrome-extension/` folder
+
+2. **Features**
+   - Advanced settings panel with biometric authentication
+   - Offline caching with encrypted local storage
+   - Real-time bidirectional synchronization
+   - Detachable popup window for enhanced workflow
+   - Auto-lock settings and timeout configuration
+
+#### Firefox Extension
 1. **Development Installation**
    - Open Firefox and navigate to `about:debugging`
    - Click "This Firefox" → "Load Temporary Add-on"
    - Select `firefox-extension/manifest.json`
 
-2. **Usage**
+2. **Feature Parity**
+   - Identical functionality to Chrome extension
+   - Same advanced settings and biometric support
+   - Cross-browser synchronization compatibility
+
+#### Usage (Both Extensions)
    - Click the PassQ icon in the toolbar
    - Login with your PassQ credentials
+   - Access settings via the gear icon for advanced configuration
+   - Use detach button to open popup in separate window
    - Visit websites with login forms for automatic detection
    - Use autofill buttons or keyboard shortcut `Ctrl+Shift+L`
 
@@ -213,6 +261,43 @@ SMTP_FROM_NAME=Your Company Name
 - The backend automatically enforces TLS for secure ports
 - Use environment variables or secrets management for credentials
 - For production database, change `sslmode=disable` to `sslmode=require`
+
+## ⚙️ Advanced Features
+
+### Auto-Lock Settings
+- **Vault Timeout**: Configurable automatic vault locking (5min to 4 hours)
+- **Browser Extension Auto-Lock**: Independent timeout settings for extensions
+- **Immediate Lock**: Manual lock functionality with secure session cleanup
+- **Lock on Browser Close**: Automatic locking when browser is closed
+- **Lock on System Sleep**: Enhanced security during system idle states
+
+### Biometric Authentication
+- **macOS Touch ID**: Native Touch ID integration for seamless authentication
+- **Windows Hello**: Windows Hello fingerprint and facial recognition support
+- **Hardware Security Keys**: FIDO2/WebAuthn compatible security key support
+- **Fallback Options**: Graceful fallback to traditional authentication methods
+- **Cross-Platform**: Consistent biometric experience across operating systems
+
+### Offline Capabilities
+- **Encrypted Caching**: AES-256-GCM encrypted local storage using IndexedDB
+- **Offline Detection**: Automatic detection of network connectivity status
+- **Sync Queue**: Intelligent queuing of changes during offline periods
+- **Conflict Resolution**: Automatic resolution of data conflicts during sync
+- **Cache Management**: Configurable cache size limits and cleanup policies
+
+### Synchronization System
+- **Bidirectional Sync**: Real-time synchronization between extensions and database
+- **Change Detection**: Efficient delta synchronization for optimal performance
+- **Conflict Resolution**: Last-write-wins with backup creation for safety
+- **Sync Status**: Visual indicators for synchronization state and progress
+- **Background Sync**: Automatic synchronization without user intervention
+
+### Popup Window Features
+- **Detached Mode**: Pop-out window functionality for enhanced workflow
+- **Window Management**: Single instance control with focus management
+- **State Persistence**: Remembers window position and size preferences
+- **Always on Top**: Optional setting for keeping window visible
+- **Resizable Interface**: Flexible window sizing for different use cases
 
 ## 🛡️ Security Features
 
@@ -346,7 +431,17 @@ For production deployment:
 
 ## 🔄 Recent Updates
 
-### Docker Security & Infrastructure (Latest)
+### Advanced Extension Features (Latest)
+- ✅ **Chrome Extension Feature Parity**: Complete Chrome extension with identical functionality to Firefox
+- ✅ **Advanced Settings Panel**: Comprehensive settings interface with biometric authentication setup
+- ✅ **Auto-Lock Configuration**: Configurable vault and extension timeout settings (5min to 4 hours)
+- ✅ **Biometric Authentication**: Touch ID, Windows Hello, and hardware security key support
+- ✅ **Offline Caching System**: Encrypted IndexedDB storage with intelligent sync capabilities
+- ✅ **Bidirectional Synchronization**: Real-time sync between extensions and database with conflict resolution
+- ✅ **Detached Popup Window**: Pop-out window functionality with state persistence and window management
+- ✅ **Cross-Browser Compatibility**: Identical features and styling across Chrome and Firefox
+
+### Docker Security & Infrastructure
 - ✅ **Docker Security Hardening**: Pinned image versions, non-root users, security constraints
 - ✅ **Vulnerability Scanning**: Automated Trivy-based security scanning script
 - ✅ **Secrets Management**: Docker secrets for production, automated generation scripts
@@ -366,13 +461,17 @@ For production deployment:
 - ✅ **Enhanced Security**: Improved token validation and user session management
 - ✅ **Password Reset Tokens**: Secure token-based password reset system
 
-### Firefox Extension Improvements
+### Browser Extension Enhancements
+- ✅ **Chrome Extension Development**: Complete Chrome extension with full feature parity
+- ✅ **Advanced Settings Interface**: Comprehensive settings panel with biometric configuration
+- ✅ **Auto-Lock Implementation**: Configurable timeout settings for vault and extension security
+- ✅ **Biometric Integration**: WebAuthn API integration for Touch ID, Windows Hello, and security keys
+- ✅ **Offline Functionality**: Encrypted local caching with IndexedDB and intelligent sync
+- ✅ **Synchronization System**: Real-time bidirectional sync with conflict resolution
+- ✅ **Popup Window Features**: Detachable window with state persistence and management
+- ✅ **Cross-Browser Compatibility**: Identical functionality and styling across browsers
 - ✅ **Comic Book Styling**: Updated extension popup with cartoon theme
-- ✅ **Rounded Action Buttons**: Enhanced button design with 8px border-radius
-- ✅ **Enhanced Shadows**: Solid black shadows for stronger visual impact
-- ✅ **Improved Spacing**: Better readability with optimized spacing
-- ✅ **Full-Width Separators**: Clean visual separation in popup interface
-- ✅ **Better Button Layout**: Improved action button spacing and alignment
+- ✅ **Enhanced UI Components**: Improved button layouts, shadows, and visual hierarchy
 
 ### Data Management Features
 - ✅ **CSV Export with Confirmation**: Secure password export with user verification
@@ -388,6 +487,11 @@ For production deployment:
 - ✅ **Mobile Responsiveness**: Complete mobile and tablet optimization
 
 ### Security Updates
+- ✅ **Advanced Encryption**: AES-256-GCM encryption for offline cache and local storage
+- ✅ **Biometric Security**: WebAuthn implementation with hardware security key support
+- ✅ **Session Management**: Enhanced auto-lock functionality with configurable timeouts
+- ✅ **Secure Synchronization**: Encrypted data transmission with integrity verification
+- ✅ **Memory Protection**: Secure cleanup of sensitive data on lock/timeout
 - ✅ **Encryption Vulnerability Fix**: Resolved nonce handling in AES-256-GCM
 - ✅ **User Authorization**: Complete endpoint authorization implementation
 - ✅ **Database Security**: Added user_id foreign keys for data ownership
@@ -419,9 +523,14 @@ For production deployment:
    - [ ] Test password reset email functionality
    - [ ] Verify SMTP TLS connection
    - [ ] Test user registration and authentication
-   - [ ] Validate Firefox extension connectivity
+   - [ ] Validate Chrome and Firefox extension connectivity
+   - [ ] Test biometric authentication (Touch ID, Windows Hello, security keys)
+   - [ ] Verify offline caching and synchronization functionality
+   - [ ] Test auto-lock settings and timeout configurations
+   - [ ] Validate detached popup window functionality
+   - [ ] Test cross-browser synchronization compatibility
    - [ ] Test OAuth integrations (Microsoft/Google)
-   - [ ] Perform security audit
+   - [ ] Perform comprehensive security audit
 
 ### Docker Production Setup
 

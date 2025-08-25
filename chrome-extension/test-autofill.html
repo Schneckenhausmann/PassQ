@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PassQ Autofill Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .login-form {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007cba;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #005a87;
+        }
+        .test-info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007cba;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h3>PassQ Autofill Test Page</h3>
+        <p>This page is designed to test the PassQ extension's autofill functionality. Try using the extension to autofill the login form below.</p>
+    </div>
+
+    <div class="login-form">
+        <h2>Login Form</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username or Email:</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username or email">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password">
+            </div>
+            
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div class="login-form" style="margin-top: 30px;">
+        <h2>Alternative Login Form</h2>
+        <form id="loginForm2">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email">
+            </div>
+            
+            <div class="form-group">
+                <label for="pwd">Password:</label>
+                <input type="password" id="pwd" name="pwd" placeholder="Enter your password">
+            </div>
+            
+            <button type="submit">Sign In</button>
+        </form>
+    </div>
+
+    <script>
+        // Prevent actual form submission for testing
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Form submission prevented for testing purposes');
+        });
+        
+        document.getElementById('loginForm2').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Form submission prevented for testing purposes');
+        });
+        
+        // Log when fields are filled (for testing)
+        document.addEventListener('input', function(e) {
+            if (e.target.type === 'text' || e.target.type === 'email' || e.target.type === 'password') {
+                console.log('Field filled:', e.target.name || e.target.id, 'Value length:', e.target.value.length);
+            }
+        });
+    </script>
+</body>
+</html>

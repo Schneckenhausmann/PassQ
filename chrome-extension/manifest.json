@@ -7,22 +7,13 @@
   "permissions": [
     "activeTab",
     "storage",
-    "tabs"
+    "tabs",
+    "windows"
   ],
   
   "host_permissions": [
-    "https://github.com/*",
-    "https://gitlab.com/*",
-    "https://google.com/*",
-    "https://microsoft.com/*",
-    "https://amazon.com/*",
-    "https://facebook.com/*",
-    "https://twitter.com/*",
-    "https://linkedin.com/*",
-    "https://stackoverflow.com/*",
-    "https://reddit.com/*",
-    "http://localhost:*/*",
-    "https://passq.app/*"
+    "https://*/*",
+    "http://*/*"
   ],
   
   "background": {
@@ -36,18 +27,9 @@
   
   "content_scripts": [{
     "matches": [
-      "https://github.com/*",
-      "https://gitlab.com/*",
-      "https://google.com/*",
-      "https://microsoft.com/*",
-      "https://amazon.com/*",
-      "https://facebook.com/*",
-      "https://twitter.com/*",
-      "https://linkedin.com/*",
-      "https://stackoverflow.com/*",
-      "https://reddit.com/*",
-      "http://localhost:*/*",
-      "https://passq.app/*"
+      "https://*/*",
+      "http://*/*",
+      "file://*/*"
     ],
     "js": ["dom-sanitizer.js", "content.js"],
     "css": ["content.css"],
@@ -75,22 +57,15 @@
   "web_accessible_resources": [{
     "resources": ["passq-overlay.html", "icons/*"],
     "matches": [
-      "https://github.com/*",
-      "https://gitlab.com/*",
-      "https://google.com/*",
-      "https://microsoft.com/*",
-      "https://amazon.com/*",
-      "https://facebook.com/*",
-      "https://twitter.com/*",
-      "https://linkedin.com/*",
-      "https://stackoverflow.com/*",
-      "https://reddit.com/*",
-      "http://localhost:*/*",
-      "https://passq.app/*"
+      "https://*/*",
+      "http://*/*",
+      "file://*/*"
     ]
   }],
   
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none';"
-  }
+  },
+  
+  "options_page": "settings.html"
 }

@@ -1,0 +1,475 @@
+/* Settings Page Styles - Cartoon Design Language */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  background: #fff;
+  color: #000;
+  line-height: 1.6;
+  margin: 0;
+  padding: 20px;
+}
+
+.settings-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  min-height: calc(100vh - 40px);
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 0 #000;
+  border-radius: 0.5rem;
+}
+
+/* Header */
+.settings-header {
+  background: #000;
+  color: white;
+  padding: 2rem;
+  border-bottom: 3px solid #000;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  flex-shrink: 0;
+}
+
+.settings-header h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Content */
+.settings-content {
+  padding: 2rem;
+}
+
+.settings-section {
+  margin-bottom: 3rem;
+  padding: 2rem;
+  border: 3px solid #000;
+  border-radius: 0.5rem;
+  background: white;
+  box-shadow: 4px 4px 0 0 #000;
+}
+
+.settings-section:last-child {
+  margin-bottom: 2rem;
+}
+
+.settings-section h2 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 0.5rem;
+}
+
+.section-description {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+/* Setting Items */
+.setting-item {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 3px solid #000;
+  border-radius: 0.5rem;
+  background: white;
+  box-shadow: 4px 4px 0 0 #000;
+}
+
+.setting-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.label-text {
+  font-weight: bold;
+  color: #000;
+  font-size: 0.875rem;
+}
+
+.label-description {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.setting-description {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+/* Form Controls */
+.setting-select {
+  padding: 0.75rem;
+  border: 3px solid #000;
+  border-radius: 0.5rem;
+  background: white;
+  font-size: 0.875rem;
+  color: #000;
+  font-weight: bold;
+  transition: all 0.15s;
+  max-width: 200px;
+  box-shadow: 4px 4px 0 0 #000;
+}
+
+.setting-select:focus {
+  outline: none;
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 0 #000;
+}
+
+/* Checkbox Styles */
+.setting-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+
+.setting-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.checkmark {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #000;
+  border-radius: 0.25rem;
+  background: white;
+  position: relative;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  box-shadow: 2px 2px 0 0 #000;
+}
+
+.setting-checkbox input[type="checkbox"]:checked + .checkmark {
+  background: #000;
+  border-color: #000;
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 0 #000;
+}
+
+.setting-checkbox input[type="checkbox"]:checked + .checkmark::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Buttons */
+.setting-button {
+  padding: 0.75rem 1.5rem;
+  border: 3px solid #000;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: white;
+  color: #000;
+  box-shadow: 4px 4px 0 0 #000;
+}
+
+.setting-button.primary {
+  background: #000;
+  color: white;
+}
+
+.setting-button:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 0 #000;
+}
+
+.setting-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 #000;
+}
+
+/* Cartoon design utilities */
+.cartoon-shadow { box-shadow: 4px 4px 0 0 #000; }
+.cartoon-border { border: 3px solid #000; }
+.cartoon-btn { 
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 0 #000;
+  background: white;
+  color: #000;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.cartoon-btn:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 0 #000;
+}
+.cartoon-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 #000;
+}
+.cartoon-btn-primary { 
+  background: #000;
+  color: white;
+}
+
+/* Logo animation from web app */
+.logo-wiggle { 
+  animation: wiggle 0.7s infinite alternate cubic-bezier(.36,.07,.19,.97); 
+}
+
+@keyframes wiggle { 
+  0% { transform: rotate(-3deg) scale(1.03); } 
+  100% { transform: rotate(3deg) scale(0.97); } 
+}
+
+/* Footer styling */
+.settings-footer {
+  padding: 2rem;
+  border-top: 3px solid #000;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.setting-button.secondary {
+  background: white;
+  color: #000;
+  border: 3px solid #000;
+}
+
+.save-status {
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: #666;
+}
+
+/* Modal styling */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border: 3px solid #000;
+  border-radius: 0.5rem;
+  box-shadow: 4px 4px 0 0 #000;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-content h3 {
+  margin: 0 0 1rem 0;
+  font-weight: bold;
+  color: #000;
+}
+
+.modal-content p {
+  margin: 0 0 2rem 0;
+  color: #666;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+/* Disabled button state */
+.setting-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: 2px 2px 0 0 #ccc !important;
+}
+
+/* Status colors for save feedback */
+.save-status.success {
+  color: #059669;
+}
+
+.save-status.error {
+  color: #dc2626;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .settings-container {
+    margin: 0;
+    box-shadow: none;
+  }
+  
+  .settings-header {
+    padding: 1.5rem 1rem;
+  }
+  
+  .settings-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .settings-content {
+    padding: 1.5rem 1rem;
+  }
+  
+  .settings-footer {
+    padding: 1.5rem 1rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .footer-buttons {
+    justify-content: stretch;
+  }
+  
+  .footer-buttons .setting-button {
+    flex: 1;
+  }
+  
+  .modal-content {
+    margin: 0.5rem;
+    padding: 1.5rem;
+  }
+  
+  .modal-buttons {
+    flex-direction: column;
+  }
+}
+
+/* Animation for smooth transitions */
+.setting-item {
+  transition: opacity 0.3s ease;
+}
+
+.setting-item[style*="display: none"] {
+  opacity: 0;
+}
+
+/* Focus styles for accessibility */
+.setting-button:focus,
+.setting-select:focus,
+.setting-checkbox:focus-within .checkmark {
+  outline: 3px solid #000;
+  outline-offset: 2px;
+}
+
+/* Loading state */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loading .setting-button {
+  position: relative;
+}
+
+.loading .setting-button::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Cache Statistics Styles */
+.cache-stats {
+  background: white;
+  border: 3px solid #000;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 0.5rem;
+  box-shadow: 4px 4px 0 0 #000;
+}
+
+.cache-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 2px solid #000;
+}
+
+.cache-stat-item:last-child {
+  border-bottom: none;
+}
+
+.cache-stat-label {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: bold;
+}
+
+.cache-stat-value {
+  font-size: 0.875rem;
+  color: #000;
+  font-weight: bold;
+}
+
+.cache-stat-value.online {
+  color: #059669;
+}
+
+.cache-stat-value.offline {
+  color: #dc2626;
+}

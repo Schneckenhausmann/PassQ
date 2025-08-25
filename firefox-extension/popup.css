@@ -84,14 +84,14 @@ button:not(.cartoon-btn), input:not([class]) {
 }
 
 /* Reset any browser defaults on header children */
-.popup-header > *:not(.logo-container):not(.logout-btn) {
+.popup-header > *:not(.logo-container):not(.header-buttons) {
   display: none !important;
 }
 
 /* Force remove any browser-generated elements */
 .popup-header input,
-.popup-header button:not(.logout-btn),
-.popup-header div:not(.logo-container),
+.popup-header button:not(.logout-btn):not(.settings-btn):not(.detach-btn),
+.popup-header div:not(.logo-container):not(.header-buttons),
 .popup-header span:not(.logo-text) {
   display: none !important;
   visibility: hidden !important;
@@ -257,6 +257,76 @@ body > *:not(.popup-container) {
   color: black !important;
   font-weight: bold !important;
   border-radius: 8px !important;
+}
+
+/* Header Buttons Container */
+.header-buttons {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* Detach Button */
+.detach-btn {
+  padding: 6px !important;
+  min-width: auto !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid #000 !important;
+  box-shadow: 2px 2px 0 0 #000 !important;
+  background: #10b981 !important;
+  color: white !important;
+  border-radius: 6px !important;
+  transition: all 0.15s !important;
+  cursor: pointer !important;
+}
+
+.detach-btn:hover {
+  background: #059669 !important;
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0 0 #000 !important;
+}
+
+.detach-btn svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+}
+
+/* Settings Button */
+.settings-btn {
+  padding: 6px !important;
+  min-width: auto !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid #000 !important;
+  box-shadow: 2px 2px 0 0 #000 !important;
+  background: white !important;
+  border-radius: 6px !important;
+  transition: all 0.15s !important;
+  cursor: pointer !important;
+}
+
+.settings-btn:hover {
+  background: #f3f4f6 !important;
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0 0 #000 !important;
+}
+
+.settings-btn svg {
+  color: #000 !important;
+  stroke: #000 !important;
+  fill: none !important;
 }
 
 .add-entry-btn {

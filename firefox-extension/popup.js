@@ -165,6 +165,7 @@ class PassQPopup {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('actionBar').style.display = 'none';
     document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('settingsBtn').style.display = 'none';
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('errorState').style.display = 'none';
   }
@@ -175,6 +176,11 @@ class PassQPopup {
     document.getElementById('mainContent').style.display = 'block';
     document.getElementById('actionBar').style.display = 'flex';
     document.getElementById('logoutBtn').style.display = 'block';
+    document.getElementById('settingsBtn').style.display = 'block';
+    
+    // Update detach button visibility based on settings
+    await this.updateDetachButtonVisibility();
+    
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('errorState').style.display = 'none';
     
@@ -187,6 +193,7 @@ class PassQPopup {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('actionBar').style.display = 'none';
     document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('settingsBtn').style.display = 'none';
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('errorState').style.display = 'block';
     document.getElementById('errorMessage').textContent = message;
@@ -198,6 +205,7 @@ class PassQPopup {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('actionBar').style.display = 'none';
     document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('settingsBtn').style.display = 'none';
     document.getElementById('loadingState').style.display = 'block';
     document.getElementById('errorState').style.display = 'none';
   }
@@ -696,6 +704,27 @@ class PassQPopup {
         this.closeCredentialEditor();
       });
     }
+
+    // Settings
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        this.openSettings();
+      });
+    }
+
+    // Detach window
+    const detachBtn = document.getElementById('detachBtn');
+    if (detachBtn) {
+      detachBtn.addEventListener('click', () => {
+        this.openDetachedWindow();
+      });
+    }
+
+    // Always check visibility during setup with a small delay to ensure DOM is ready
+    setTimeout(() => {
+      this.updateDetachButtonVisibility();
+    }, 100);
   }
 
   async handleLogin() {
@@ -753,6 +782,59 @@ class PassQPopup {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  }
+
+  async updateDetachButtonVisibility() {
+    console.log('updateDetachButtonVisibility called');
+    const detachBtn = document.getElementById('detachBtn');
+    if (!detachBtn) {
+      console.log('Detach button not found in DOM');
+      console.log('Available elements with detach:', document.querySelectorAll('[id*="detach"]'));
+      return;
+    }
+
+    console.log('Detach button found:', detachBtn);
+    console.log('Current detach button style:', detachBtn.style.display);
+    console.log('Computed style:', window.getComputedStyle(detachBtn).display);
+
+    try {
+      // Hide detach button in popup mode, show in detached mode
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('detached') === 'true') {
+        detachBtn.style.display = 'none';
+      } else {
+        detachBtn.style.display = 'block';
+        console.log('After setting display block:', detachBtn.style.display);
+        console.log('After setting - computed style:', window.getComputedStyle(detachBtn).display);
+      }
+    } catch (error) {
+      console.error('Error updating detach button visibility:', error);
+    }
+  }
+
+  async openDetachedWindow() {
+    try {
+      // Create a new window with the popup content
+      const windowOptions = {
+        url: browser.runtime.getURL('popup.html?detached=true'),
+        type: 'popup',
+        width: 350,
+        height: 600,
+        focused: true
+      };
+
+      await browser.windows.create(windowOptions);
+      
+      // Close the current popup
+      window.close();
+    } catch (error) {
+      console.error('Failed to open detached window:', error);
+    }
+  }
+
+  openSettings() {
+    // Open the settings page in a new tab
+    browser.tabs.create({ url: browser.runtime.getURL('settings.html') });
   }
 }
 

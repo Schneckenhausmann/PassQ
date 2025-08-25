@@ -10,12 +10,35 @@ function AccountSettingsModal({ isOpen, onClose }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  
+  // Auto-lock settings state
+  const [autoLockTimeout, setAutoLockTimeout] = useState('15');
+  const [lockOnRefresh, setLockOnRefresh] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
       loadLinkedAccounts();
+      loadAutoLockSettings();
     }
   }, [isOpen]);
+
+  const loadAutoLockSettings = () => {
+    const savedTimeout = localStorage.getItem('autoLockTimeout') || '15';
+    const savedLockOnRefresh = localStorage.getItem('lockOnRefresh') !== 'false';
+    setAutoLockTimeout(savedTimeout);
+    setLockOnRefresh(savedLockOnRefresh);
+  };
+
+  const saveAutoLockSettings = () => {
+    localStorage.setItem('autoLockTimeout', autoLockTimeout);
+    localStorage.setItem('lockOnRefresh', lockOnRefresh.toString());
+    setSuccess('Auto-lock settings saved successfully');
+    
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new CustomEvent('autoLockSettingsChanged', {
+      detail: { timeout: autoLockTimeout, lockOnRefresh }
+    }));
+  };
 
   const loadLinkedAccounts = async () => {
     try {
@@ -189,6 +212,54 @@ function AccountSettingsModal({ isOpen, onClose }) {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Security Settings</h3>
                 <div className="space-y-4">
+                  {/* Auto-lock Settings */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-medium mb-3">Vault Auto-Lock</h4>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Auto-lock timeout</label>
+                        <select
+                          value={autoLockTimeout}
+                          onChange={(e) => setAutoLockTimeout(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="5">5 minutes</option>
+                          <option value="15">15 minutes</option>
+                          <option value="30">30 minutes</option>
+                          <option value="60">1 hour</option>
+                          <option value="120">2 hours</option>
+                          <option value="240">4 hours</option>
+                          <option value="480">8 hours</option>
+                          <option value="never">Never</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">Vault will automatically lock after this period of inactivity</p>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="lockOnRefresh"
+                          checked={lockOnRefresh}
+                          onChange={(e) => setLockOnRefresh(e.target.checked)}
+                          className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="lockOnRefresh" className="text-sm font-medium">
+                          Lock vault on page refresh
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500">When enabled, any page refresh or navigation requires re-authentication</p>
+                      
+                      <button
+                        onClick={saveAutoLockSettings}
+                        className="cartoon-btn cartoon-btn-primary"
+                      >
+                        Save Auto-lock Settings
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Password Settings */}
                   <div className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>

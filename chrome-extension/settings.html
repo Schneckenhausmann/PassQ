@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PassQ Extension Settings</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="settings-container">
+    <!-- Header -->
+    <div class="settings-header">
+      <div class="logo-container">
+        <svg width="32" height="32" viewBox="0 0 100 100" class="logo">
+          <rect x="30" y="35" width="40" height="30" rx="5" fill="none" stroke="#2563eb" stroke-width="4"/>
+          <circle cx="50" cy="50" r="3" fill="#2563eb"/>
+          <path d="M35 35 L35 25 C35 18 41 12 50 12 C59 12 65 18 65 25 L65 35" stroke="#2563eb" stroke-width="4" fill="none"/>
+          <text x="50" y="80" text-anchor="middle" fill="#2563eb" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Q</text>
+        </svg>
+        <h1>PassQ Extension Settings</h1>
+      </div>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="settings-content">
+      <!-- Auto-Lock Settings -->
+      <div class="settings-section">
+        <h2>Auto-Lock Settings</h2>
+        <p class="section-description">Configure when the extension should automatically lock for security.</p>
+        
+        <div class="setting-item">
+          <label for="autoLockTimeout" class="setting-label">
+            <span class="label-text">Auto-lock timeout</span>
+            <span class="label-description">Extension will lock after this period of inactivity</span>
+          </label>
+          <select id="autoLockTimeout" class="setting-select">
+            <option value="60000">1 minute</option>
+            <option value="300000">5 minutes</option>
+            <option value="900000">15 minutes</option>
+            <option value="1800000">30 minutes</option>
+            <option value="3600000">1 hour</option>
+            <option value="0">Never</option>
+          </select>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-checkbox">
+            <input type="checkbox" id="lockOnBrowserRestart">
+            <span class="checkmark"></span>
+            <span class="checkbox-label">
+              <span class="label-text">Lock on browser restart</span>
+              <span class="label-description">Automatically lock when browser is restarted</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-checkbox">
+            <input type="checkbox" id="lockOnSystemSleep">
+            <span class="checkmark"></span>
+            <span class="checkbox-label">
+              <span class="label-text">Lock on system sleep</span>
+              <span class="label-description">Automatically lock when system goes to sleep</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Biometric Authentication -->
+      <div class="settings-section">
+        <h2>Biometric Authentication</h2>
+        <p class="section-description">Use biometric authentication for quick unlock (requires compatible hardware).</p>
+        
+        <div class="setting-item">
+          <label class="setting-checkbox">
+            <input type="checkbox" id="enableBiometric">
+            <span class="checkmark"></span>
+            <span class="checkbox-label">
+              <span class="label-text">Enable biometric unlock</span>
+              <span class="label-description">Use fingerprint, Face ID, or Windows Hello to unlock</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="setting-item" id="biometricTimeoutSetting" style="display: none;">
+          <label for="biometricTimeout" class="setting-label">
+            <span class="label-text">Biometric timeout</span>
+            <span class="label-description">How long biometric unlock remains valid</span>
+          </label>
+          <select id="biometricTimeout" class="setting-select">
+            <option value="300000">5 minutes</option>
+            <option value="900000">15 minutes</option>
+            <option value="1800000">30 minutes</option>
+            <option value="3600000">1 hour</option>
+            <option value="14400000">4 hours</option>
+          </select>
+        </div>
+
+        <div class="setting-item" id="setupBiometricSetting" style="display: none;">
+          <button id="setupBiometric" class="setting-button primary">
+            Setup Biometric Authentication
+          </button>
+        </div>
+      </div>
+
+      <!-- Offline Settings -->
+      <div class="settings-section">
+        <h2>Offline Access</h2>
+        <p class="section-description">Configure offline caching for when you're not connected to the internet.</p>
+        
+        <div class="setting-item">
+          <label class="setting-checkbox">
+            <input type="checkbox" id="enableOfflineCache">
+            <span class="checkmark"></span>
+            <span class="checkbox-label">
+              <span class="label-text">Enable offline caching</span>
+              <span class="label-description">Cache encrypted credentials for offline access (24-hour limit)</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="setting-item" id="cacheStatsContainer">
+          <div class="setting-label">
+            <span class="label-text">Cache Statistics</span>
+          </div>
+          <div id="cacheStats" class="cache-stats">
+            <div class="cache-stat-item">
+              <span class="cache-stat-label">Loading cache statistics...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-item" id="clearCacheSetting">
+          <button id="clearCache" class="setting-button secondary">
+            Clear Offline Cache
+          </button>
+          <span class="setting-description">Remove all cached data from this device</span>
+        </div>
+      </div>
+
+      <!-- Advanced Settings -->
+      <div class="settings-section">
+        <h2>Advanced</h2>
+        
+
+
+        <div class="setting-item">
+          <label class="setting-checkbox">
+            <input type="checkbox" id="enableDebugMode">
+            <span class="checkmark"></span>
+            <span class="checkbox-label">
+              <span class="label-text">Debug mode</span>
+              <span class="label-description">Enable detailed logging for troubleshooting</span>
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="settings-footer">
+      <div class="save-status" id="saveStatus"></div>
+      <div class="footer-buttons">
+        <button id="resetSettings" class="setting-button secondary">Reset to Defaults</button>
+        <button id="saveSettings" class="setting-button primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 id="confirmTitle">Confirm Action</h3>
+      <p id="confirmMessage">Are you sure you want to proceed?</p>
+      <div class="modal-buttons">
+        <button id="confirmCancel" class="setting-button secondary">Cancel</button>
+        <button id="confirmOk" class="setting-button primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="offline-cache.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
