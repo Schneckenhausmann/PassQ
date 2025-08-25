@@ -86,6 +86,10 @@ diesel::table! {
         reset_token -> Nullable<Varchar>,
         reset_token_expires_at -> Nullable<Timestamp>,
         email -> Varchar,
+        auth_method -> Nullable<Varchar>,
+        is_sso_user -> Nullable<Bool>,
+        sso_display_name -> Nullable<Varchar>,
+        sso_avatar_url -> Nullable<Varchar>,
     }
 }
 
@@ -97,10 +101,28 @@ diesel::joinable!(passwords -> users (user_id));
 diesel::joinable!(shares -> folders (folder_id));
 diesel::joinable!(shares -> passwords (password_id));
 
+diesel::table! {
+    oauth_accounts (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        provider -> Varchar,
+        provider_user_id -> Varchar,
+        email -> Varchar,
+        access_token_hash -> Nullable<Varchar>,
+        refresh_token_hash -> Nullable<Varchar>,
+        token_expires_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::joinable!(oauth_accounts -> users (user_id));
+
 diesel::allow_tables_to_appear_in_same_query!(
     audit_logs,
     folders,
     login_history,
+    oauth_accounts,
     passwords,
     shares,
     users,

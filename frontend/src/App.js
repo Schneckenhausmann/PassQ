@@ -3,10 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import Logo from './components/Logo';
 import { Icons } from './components/Icons';
-import PasswordChangeModal from './components/PasswordChangeModal';
+import AccountSettingsModal from './components/AccountSettingsModal';
 import './App.css';
 
 import AuthPages from './components/AuthPages';
+import SSOCallback from './components/SSOCallback';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -80,7 +81,7 @@ function App() {
                 onClick={() => setIsSettingsModalOpen(true)}
               >
                 <Icons.Settings size={14} />
-                <span>Change password</span>
+                <span>Settings</span>
               </button>
               <button className="cartoon-btn cartoon-shadow px-3 py-1 text-xs md:text-sm" onClick={handleLogout}>
                 Logout
@@ -90,13 +91,15 @@ function App() {
           <main className="flex-1 w-full">
             <Dashboard />
           </main>
-          <PasswordChangeModal 
+          <AccountSettingsModal 
             isOpen={isSettingsModalOpen} 
             onClose={() => setIsSettingsModalOpen(false)} 
           />
         </div>
       ) : (
         <Routes>
+          <Route path="/auth/sso/microsoft/callback" element={<SSOCallback />} />
+          <Route path="/auth/sso/google/callback" element={<SSOCallback />} />
           <Route path="/forgot-password" element={<AuthPages onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/reset-password" element={<AuthPages onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/*" element={<AuthPages onLoginSuccess={handleLoginSuccess} />} />

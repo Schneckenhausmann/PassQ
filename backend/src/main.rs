@@ -9,7 +9,9 @@ mod email;
 mod ip_controls;
 mod mfa;
 mod models;
+mod oauth;
 mod schema;
+mod sso_auth;
 
 use actix_web::{web, App, HttpServer, middleware::Logger, http::header, dev::{ServiceRequest, ServiceResponse}, Error, Result};
 use actix_cors::Cors;
@@ -199,6 +201,10 @@ mod handlers {
                             reset_token: None,
                             reset_token_expires_at: None,
                             email: user_data.email.clone(),
+                            auth_method: Some("password".to_string()),
+                            is_sso_user: Some(false),
+                            sso_display_name: None,
+                            sso_avatar_url: None,
                         };
                         
                         // Insert user into database
@@ -2463,6 +2469,25 @@ async fn main() -> std::io::Result<()> {
                 web::resource("/auth/change-password")
                     .wrap(Governor::new(&auth_governor_conf))
                     .route(web::post().to(handlers::change_password))
+            )
+            // OAuth endpoints
+            .service(
+                web::resource("/auth/oauth/{provider}/url")
+                    .wrap(Governor::new(&auth_governor_conf))
+                    .route(web::get().to(sso_auth::get_oauth_auth_url))
+            )
+            .service(
+                web::resource("/auth/oauth/{provider}/callback")
+                    .wrap(Governor::new(&auth_governor_conf))
+                    .route(web::post().to(sso_auth::handle_oauth_callback))
+            )
+            .service(
+                web::resource("/auth/oauth/accounts")
+                    .route(web::get().to(sso_auth::get_user_oauth_accounts))
+            )
+            .service(
+                web::resource("/auth/oauth/accounts/{id}")
+                    .route(web::delete().to(sso_auth::unlink_oauth_account))
             )
             // Password endpoints
             .service(

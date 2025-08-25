@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono;
 
-#[derive(Queryable, Selectable, Serialize, Debug)]
+#[derive(Queryable, Selectable, Serialize, Deserialize, Debug)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
@@ -15,6 +15,10 @@ pub struct User {
     pub reset_token: Option<String>,
     pub reset_token_expires_at: Option<chrono::NaiveDateTime>,
     pub email: String,
+    pub auth_method: Option<String>,
+    pub is_sso_user: Option<bool>,
+    pub sso_display_name: Option<String>,
+    pub sso_avatar_url: Option<String>,
 }
 
 #[derive(Insertable)]
@@ -36,6 +40,14 @@ pub struct NewUser {
     pub reset_token_expires_at: Option<chrono::NaiveDateTime>,
     #[diesel(column_name = email)]
     pub email: String,
+    #[diesel(column_name = auth_method)]
+    pub auth_method: Option<String>,
+    #[diesel(column_name = is_sso_user)]
+    pub is_sso_user: Option<bool>,
+    #[diesel(column_name = sso_display_name)]
+    pub sso_display_name: Option<String>,
+    #[diesel(column_name = sso_avatar_url)]
+    pub sso_avatar_url: Option<String>,
 }
 
 #[derive(Deserialize)]

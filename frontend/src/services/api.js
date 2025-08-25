@@ -35,6 +35,47 @@ export const authAPI = {
   changePassword: (passwordData) => makeRequest('/auth/change-password', { method: 'PUT', body: JSON.stringify(passwordData) }),
   requestPasswordReset: (email) => makeRequest('/auth/password-reset/request', { method: 'POST', body: JSON.stringify({ email }) }),
   confirmPasswordReset: (token, newPassword) => makeRequest('/auth/password-reset/confirm', { method: 'POST', body: JSON.stringify({ token, new_password: newPassword }) }),
+  // SSO Authentication
+  ssoLogin: async (provider) => {
+    try {
+      // Get OAuth authorization URL from backend
+      const response = await makeRequest(`/auth/oauth/${provider}/url`, {
+        method: 'GET'
+      });
+      
+      if (response.success && response.data) {
+        // Redirect to OAuth provider
+        window.location.href = response.data.auth_url;
+      } else {
+        throw new Error('Failed to get OAuth URL');
+      }
+    } catch (error) {
+      console.error('SSO login error:', error);
+      throw error;
+    }
+  },
+
+  ssoCallback: async (code, state, provider) => {
+    const response = await makeRequest(`/auth/oauth/${provider}/callback`, {
+      method: 'POST',
+      body: JSON.stringify({ code, state })
+    });
+    return response;
+  },
+
+  getLinkedAccounts: async () => {
+    const response = await makeRequest('/auth/oauth/accounts', {
+      method: 'GET'
+    });
+    return response;
+  },
+
+  unlinkAccount: async (accountId) => {
+    const response = await makeRequest(`/auth/oauth/accounts/${accountId}`, {
+      method: 'DELETE'
+    });
+    return response;
+  }
 };
 
 // Password API
